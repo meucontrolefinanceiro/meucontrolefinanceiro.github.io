@@ -103,7 +103,7 @@
 .month-tabs{display:flex;gap:6px;overflow:auto;margin:8px 0 10px;padding-bottom:2px}.month-tab{border:0;border-radius:999px;padding:8px 11px;background:#e7f2ed;color:var(--green);font-weight:800;white-space:nowrap}.month-tab.active{background:var(--green);color:#fff}.month-tab:disabled{opacity:.45}
 </style>
 
-<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 29</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
+<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 30</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
 <main>
 <nav><button class="active" data-tab="inicio">Visão geral</button><button data-tab="lancamentos">Lançamentos</button><button data-tab="cadastros">Cadastros</button><button data-tab="relatorios">Relatórios</button><button data-tab="backup">Backup</button><button data-tab="seguranca">Segurança</button></nav>
 <section id="inicio">
@@ -133,7 +133,7 @@
 <div id="cardWrap" class="hidden"><label>Cartão de crédito</label><select id="cardSelect"><option value="">Selecione o cartão</option></select>
 <label>Compra</label><select id="installmentType"><option>À vista</option><option>Parcelada</option></select><div id="installmentWrap" class="hidden"><label>Número de parcelas</label><input id="installments" type="number" min="2" step="1" inputmode="numeric" placeholder="6"><div id="parcelPreview" class="muted"></div></div><div id="invoicePreview" class="muted"></div></div>
 <label>Recorrente?</label><select id="recurring"><option>Não</option><option>Sim</option></select>
-<div id="recurringWrap" class="hidden"><div class="row"><div><label>Frequência</label><select id="frequency"><option>Mensal</option><option>Semanal</option><option>Quinzenal</option><option>Anual</option></select></div><div><label>Fim (opcional)</label><input id="endDate" type="date"></div></div><p class="muted">O cadastro recorrente serve para a projeção. O histórico passado não é alterado.</p></div>
+<div id="recurringWrap" class="hidden"><div class="row"><div><label>Frequência</label><select id="frequency"><option>Mensal</option><option>Semanal</option><option>Quinzenal</option><option>Bimestral</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select></div><div><label>Fim (opcional)</label><input id="endDate" type="date"></div></div><p class="muted">O cadastro recorrente serve para a projeção. O histórico passado não é alterado.</p></div>
 <label>Observação (opcional)</label><input id="note">
 <button class="btn primary" type="submit" id="saveTxBtn">Salvar lançamento</button><button class="btn hidden" type="button" id="cancelEditBtn">Cancelar edição</button><button class="btn hidden" type="button" id="clearDraftBtn">Descartar rascunho</button>
 </form></div>
@@ -225,16 +225,8 @@ const mcfBRDate=value=>{if(!value)return '';const m=String(value).match(/^(\d{4}
 const parseBRDate=value=>{const s=String(value||'').trim();const m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(!m)return '';const d=Number(m[1]),mo=Number(m[2]),y=Number(m[3]);const dt=new Date(y,mo-1,d);return dt.getFullYear()===y&&dt.getMonth()===mo-1&&dt.getDate()===d?`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:''};
 const todayBR=()=>mcfBRDate(today());
 
-const defaultAccounts=[
-{id:'acc_nubank',box:'Pessoal',bank:'Nubank',name:'Nubank',balance:0,active:true},
-{id:'acc_bradesco',box:'Pessoal',bank:'Bradesco',name:'Bradesco',balance:0,active:true},
-{id:'acc_inter',box:'Pessoal',bank:'Inter',name:'Inter',balance:0,active:true},
-{id:'acc_caixa',box:'Pessoal',bank:'Caixa',name:'Caixa',balance:0,active:true},
-{id:'acc_btg',box:'Pessoal',bank:'BTG',name:'BTG',balance:0,active:true},
-{id:'acc_itau',box:'Casa',bank:'Itaú',name:'Itaú',balance:0,active:true},
-{id:'acc_sicoob',box:'Casa',bank:'Sicoob',name:'Sicoob',balance:0,active:true}
-];
-if(!Array.isArray(data.accounts)||!data.accounts.length)data.accounts=defaultAccounts.map(a=>({...a})); data.accounts.forEach(a=>{if(a.box==='Meu Financeiro')a.box='Pessoal'});
+if(!Array.isArray(data.accounts))data.accounts=[];
+data.accounts.forEach(a=>{if(a.box==='Meu Financeiro')a.box='Pessoal'});
 function activeAccounts(b){return data.accounts.filter(a=>a.box===b&&a.active)}
 function accountName(id){const a=data.accounts.find(x=>x.id===id);return a?a.name:''}
 let editingAccountId=null;
@@ -243,9 +235,9 @@ function renderAccounts(){
   $('accountSelect').innerHTML='<option value="">Selecione a conta</option>'+list.map(a=>`<option value="${esc(a.id)}">${esc(a.name)} — ${esc(a.bank)}</option>`).join('');
   $('accountBox').innerHTML=`<option value="${esc(currentBox())}">${esc(currentBox())}</option>`;
   $('accountBox').value=currentBox();
-  $('accountsList').innerHTML=list.length?list.map(a=>`<div class="item"><div><strong>${esc(a.name)}</strong><div class="muted">${esc(a.bank)} · Saldo: ${money(a.balance)}</div></div><div><strong>${money(a.balance)}</strong><br><button type="button" class="btn" onclick="editAccount('${esc(a.id)}')">Editar</button></div></div>`).join(''):'<p class="muted">Nenhuma conta ativa neste caixa.</p>';
-  const sortedBanks=list.slice().sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
-  $('bankBalances').innerHTML=sortedBanks.length?sortedBanks.map(a=>`<div class="item"><span>${esc(a.name)}</span><strong>${money(a.balance)}</strong></div>`).join(''):'<p class="muted">Nenhuma conta cadastrada.</p>';
+  $('accountsList').innerHTML=list.length?list.map(a=>`<div class="item"><div><strong>${esc(a.name)}</strong><div class="muted">${esc(a.bank)} · Saldo: ${money(a.balance)}</div></div><div><strong>${money(a.balance)}</strong><br><button type="button" class="btn" onclick="editAccount('${esc(a.id)}')">Editar</button> <button type="button" class="btn danger" onclick="deleteAccount('${esc(a.id)}')">Excluir</button></div></div>`).join(''):'<p class="muted">Nenhuma conta ativa neste caixa.</p>';
+  const sortedBanks=list.filter(a=>Number(a.balance||0)!==0).slice().sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
+  $('bankBalances').innerHTML=sortedBanks.length?sortedBanks.map(a=>`<div class="item"><span>${esc(a.name)}</span><strong>${money(a.balance)}</strong></div>`).join(''):'<p class="muted">Nenhuma conta com saldo.</p>';
 }
 if(!Array.isArray(data.applications))data.applications=[];
 function activeApplications(b){return data.applications.filter(a=>a.box===b&&a.active!==false)}
@@ -266,10 +258,12 @@ function renderApplications(){
   const totals=applicationTotals(currentBox());
   const html=apps.length?apps.map(applicationItemHTML).join(''):'<p class="muted">Nenhuma aplicação cadastrada neste caixa.</p>';
   $('applicationsList').innerHTML=html;
-  const sortedApps=apps.slice().sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
+  const sortedApps=apps.filter(a=>Number(a.balance||0)!==0).slice().sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
   $('dashboardApplicationsList').innerHTML=sortedApps.length?sortedApps.map(a=>`<div class="item"><span><strong>${esc(a.institution)} — ${esc(a.description)}</strong><div class="muted">${a.liquidity==='Imediata'?'Liquidez imediata':a.liquidity==='Parcial'?'Liquidez parcial':a.liquidity==='Sem liquidez imediata'?'Sem liquidez imediata':'Liquidez não informada'}</div></span><strong>${money(a.balance)}</strong></div>`).join(''):'';
   $('appTotal').textContent=money(totals.total);
   $('appImmediate').textContent=money(totals.immediate);
+  const immediateRow=$('appImmediate')?.parentElement;
+  if(immediateRow) immediateRow.style.display=totals.immediate>0?'':'none';
 }
 function editApplication(id){
   const a=data.applications.find(x=>x.id===id);
@@ -302,13 +296,8 @@ function removeApplication(id){
   if(editingApplicationId===id)cancelApplicationEdit();
   persist();
 }
-const defaultCards=[
-{id:'card_nubank',box:'Pessoal',name:'Nubank',dueDay:16,closeDay:'',active:true},
-{id:'card_santander',box:'Pessoal',name:'Santander',dueDay:12,closeDay:'',active:true},
-{id:'card_inter',box:'Pessoal',name:'Inter',dueDay:20,closeDay:'',active:true},
-{id:'card_itau',box:'Casa',name:'Itaú',dueDay:17,closeDay:'',active:true}
-];
-if(!Array.isArray(data.cards))data.cards=[]; data.cards.forEach(c=>{if(c.box==='Meu Financeiro')c.box='Pessoal'}); defaultCards.forEach(def=>{const existing=data.cards.find(c=>c.id===def.id); if(!existing)data.cards.push({...def}); else {existing.box=existing.box||def.box; existing.dueDay=existing.dueDay||def.dueDay; if(existing.closeDay==null||existing.closeDay==='')existing.closeDay=def.closeDay; if(existing.active==null)existing.active=true;}});
+if(!Array.isArray(data.cards))data.cards=[];
+data.cards.forEach(c=>{if(c.box==='Meu Financeiro')c.box='Pessoal'});
 
 // Fechamentos confirmados/inferidos a partir das faturas enviadas.
 // Só preenche quando ainda não houver um fechamento salvo pelo usuário.
@@ -330,7 +319,7 @@ function renderCards(){
   $('cardSelect').innerHTML='<option value="">Selecione o cartão</option>'+cards.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.dueDay?' — vence dia '+c.dueDay:''}</option>`).join('');
   $('cardBox').innerHTML=`<option value="${esc(currentBox())}">${esc(currentBox())}</option>`;
   $('cardBox').value=currentBox();
-  $('cardsList').innerHTML=cards.length?cards.map(c=>`<div class="item"><div><strong>${esc(c.name)}</strong><div class="muted">Vencimento: dia ${esc(c.dueDay||'—')} · Fechamento: ${esc(c.closeDay||'não informado')}</div></div></div>`).join(''):'<p class="muted">Nenhum cartão ativo neste caixa.</p>';
+  $('cardsList').innerHTML=cards.length?cards.map(c=>`<div class="item"><div><strong>${esc(c.name)}</strong><div class="muted">Vencimento: dia ${esc(c.dueDay||'—')} · Fechamento: ${esc(c.closeDay||'não informado')}</div></div><div><button type="button" class="btn danger" onclick="deleteCard('${esc(c.id)}')">Excluir</button></div></div>`).join(''):'<p class="muted">Nenhum cartão ativo neste caixa.</p>';
 }
 if(!Array.isArray(data.installments))data.installments=[];
 if(!Array.isArray(data.invoices))data.invoices=[];
@@ -611,10 +600,13 @@ function recurringDates(start,end,frequency){
   const limit=end||addMonthsDate(start,12);
   while(d<=limit){
     out.push(d);
-    if(frequency==='Mensal')d=addMonthsDate(d,1);
-    else if(frequency==='Quinzenal')d=addMonthsDate(d,0).replace(/$/, '');
+    if(frequency==='Semanal'){const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+7);d=x.toISOString().slice(0,10)}
+    else if(frequency==='Quinzenal'){const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+15);d=x.toISOString().slice(0,10)}
+    else if(frequency==='Mensal')d=addMonthsDate(d,1);
+    else if(frequency==='Bimestral')d=addMonthsDate(d,2);
+    else if(frequency==='Trimestral')d=addMonthsDate(d,3);
+    else if(frequency==='Semestral')d=addMonthsDate(d,6);
     else if(frequency==='Anual')d=addMonthsDate(d,12);
-    else if(frequency==='Semanal'){const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+7);d=x.toISOString().slice(0,10)}
     else break;
     if(out.length>120)break;
   }
@@ -952,6 +944,36 @@ function cancelAccountEdit(){
   $('accountBank').value='';$('accountName').value='';$('accountBalance').value='';
   $('accountForm').querySelector('button[type="submit"]').textContent='Adicionar conta';
   const c=$('cancelAccountEdit'); if(c) c.remove();
+}
+
+function deleteAccount(id){
+  const a=data.accounts.find(x=>x.id===id);
+  if(!a)return;
+  const txRefs=data.tx.filter(t=>t.accountId===id).length;
+  const invoiceRefs=data.invoices.filter(i=>i.paidAccountId===id).length;
+  if(txRefs||invoiceRefs){
+    alert('Esta conta não pode ser excluída porque está vinculada a dados existentes.\n\nLançamentos: '+txRefs+'\nPagamentos de fatura: '+invoiceRefs);
+    return;
+  }
+  if(!confirm(`Excluir a conta "${a.name}"?`))return;
+  data.accounts=data.accounts.filter(x=>x.id!==id);
+  if(editingAccountId===id)cancelAccountEdit();
+  persist();
+}
+
+function deleteCard(id){
+  const c=data.cards.find(x=>x.id===id);
+  if(!c)return;
+  const txRefs=data.tx.filter(t=>t.cardId===id).length;
+  const installmentRefs=data.installments.filter(p=>p.cardId===id).length;
+  const invoiceRefs=data.invoices.filter(i=>i.cardId===id).length;
+  if(txRefs||installmentRefs||invoiceRefs){
+    alert('Este cartão não pode ser excluído porque está vinculado a dados existentes.\n\nLançamentos: '+txRefs+'\nParcelas: '+installmentRefs+'\nFaturas: '+invoiceRefs);
+    return;
+  }
+  if(!confirm(`Excluir o cartão "${c.name}"?`))return;
+  data.cards=data.cards.filter(x=>x.id!==id);
+  persist();
 }
 
 $('applicationForm').onsubmit=e=>{
