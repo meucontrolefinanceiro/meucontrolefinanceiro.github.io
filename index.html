@@ -103,7 +103,7 @@
 .month-tabs{display:flex;gap:6px;overflow:auto;margin:8px 0 10px;padding-bottom:2px}.month-tab{border:0;border-radius:999px;padding:8px 11px;background:#e7f2ed;color:var(--green);font-weight:800;white-space:nowrap}.month-tab.active{background:var(--green);color:#fff}.month-tab:disabled{opacity:.45}
 </style>
 
-<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 30</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
+<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 31</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
 <main>
 <nav><button class="active" data-tab="inicio">Visão geral</button><button data-tab="lancamentos">Lançamentos</button><button data-tab="cadastros">Cadastros</button><button data-tab="relatorios">Relatórios</button><button data-tab="backup">Backup</button><button data-tab="seguranca">Segurança</button></nav>
 <section id="inicio">
@@ -214,10 +214,10 @@
 <footer>Versão 31 • Caixa selecionado no dashboard e mantido nas demais telas.</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const SCHEMA=4;const DEFAULT_BOXES=['Pessoal','Casa'];let data={boxes:[...DEFAULT_BOXES],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const SCHEMA=4;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
-function normalizeData(raw){const d=raw&&typeof raw==='object'?raw:{};if(!Array.isArray(d.boxes))d.boxes=[];d.boxes=d.boxes.map(b=>String(b??'').trim()).filter(Boolean).map(b=>b==='Meu Financeiro'?'Pessoal':b);DEFAULT_BOXES.forEach(b=>{if(!d.boxes.includes(b))d.boxes.push(b)});d.boxes=[...new Set(d.boxes)];if(!Array.isArray(d.tx))d.tx=[];d.tx=d.tx.map(t=>({...t,party:String(t?.party||t?.store||t?.loja||'')}));if(!Array.isArray(d.accounts))d.accounts=[];if(!Array.isArray(d.cards))d.cards=[];if(!Array.isArray(d.categories))d.categories=[];if(!Array.isArray(d.applications))d.applications=[];if(!Array.isArray(d.installments))d.installments=[];if(!Array.isArray(d.invoices))d.invoices=[];if(!Array.isArray(d.recurring))d.recurring=[];if(!Array.isArray(d.refunds))d.refunds=[];d._schemaVersion=SCHEMA;return d}
-(function loadDataSafely(){const raw=localStorage.getItem(KEY)||localStorage.getItem('mcf_data_v1');if(!raw){data=normalizeData({});return}try{const parsed=JSON.parse(raw);const before=cloneData(parsed);const needsMigration=Number(parsed._schemaVersion||0)<SCHEMA||!Array.isArray(parsed.boxes)||parsed.boxes.length===0;if(needsMigration){try{localStorage.setItem(AUTO,JSON.stringify({app:'Meu Controle Financeiro',version:SCHEMA,reason:'pré-migração automática',createdAt:new Date().toISOString(),data:before}))}catch(e){}}data=normalizeData(parsed);if(needsMigration){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}}}catch(e){data=normalizeData({});dataLoadWarning='Os dados salvos não puderam ser lidos. O aplicativo não substituiu o arquivo original. Verifique a área de Backup antes de continuar.'}})();
+function normalizeData(raw){const d=raw&&typeof raw==='object'?raw:{};if(!Array.isArray(d.boxes))d.boxes=[];d.boxes=d.boxes.map(b=>String(b??'').trim()).filter(Boolean).map(b=>b==='Meu Financeiro'?'Pessoal':b);d.boxes=[...new Set(d.boxes)];if(!Array.isArray(d.tx))d.tx=[];d.tx=d.tx.map(t=>({...t,party:String(t?.party||t?.store||t?.loja||'')}));if(!Array.isArray(d.accounts))d.accounts=[];if(!Array.isArray(d.cards))d.cards=[];if(!Array.isArray(d.categories))d.categories=[];if(!Array.isArray(d.applications))d.applications=[];if(!Array.isArray(d.installments))d.installments=[];if(!Array.isArray(d.invoices))d.invoices=[];if(!Array.isArray(d.recurring))d.recurring=[];if(!Array.isArray(d.refunds))d.refunds=[];d._schemaVersion=SCHEMA;return d}
+(function loadDataSafely(){const raw=localStorage.getItem(KEY)||localStorage.getItem('mcf_data_v1');if(!raw){data=normalizeData({boxes:[]});return}try{const parsed=JSON.parse(raw);const before=cloneData(parsed);const needsMigration=Number(parsed._schemaVersion||0)<SCHEMA||!Array.isArray(parsed.boxes)||parsed.boxes.length===0;if(needsMigration){try{localStorage.setItem(AUTO,JSON.stringify({app:'Meu Controle Financeiro',version:SCHEMA,reason:'pré-migração automática',createdAt:new Date().toISOString(),data:before}))}catch(e){}}data=normalizeData(parsed);if(needsMigration){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}}}catch(e){data=normalizeData({});dataLoadWarning='Os dados salvos não puderam ser lidos. O aplicativo não substituiu o arquivo original. Verifique a área de Backup antes de continuar.'}})();
 let security={enabled:false,hash:''};let lockTimeout=Number(localStorage.getItem(LOCK)||15);let locked=false;let lastActivity=Number(localStorage.getItem('mcf_security_last_activity')||Date.now());
 try{const z=localStorage.getItem(SEC);if(z)security=JSON.parse(z)}catch(e){}
 const $=id=>document.getElementById(id);const today=()=>new Date().toISOString().slice(0,10);
@@ -225,8 +225,7 @@ const mcfBRDate=value=>{if(!value)return '';const m=String(value).match(/^(\d{4}
 const parseBRDate=value=>{const s=String(value||'').trim();const m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(!m)return '';const d=Number(m[1]),mo=Number(m[2]),y=Number(m[3]);const dt=new Date(y,mo-1,d);return dt.getFullYear()===y&&dt.getMonth()===mo-1&&dt.getDate()===d?`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:''};
 const todayBR=()=>mcfBRDate(today());
 
-if(!Array.isArray(data.accounts))data.accounts=[];
-data.accounts.forEach(a=>{if(a.box==='Meu Financeiro')a.box='Pessoal'});
+if(!Array.isArray(data.accounts))data.accounts=[]; data.accounts.forEach(a=>{if(a.box==='Meu Financeiro')a.box='Pessoal'});
 function activeAccounts(b){return data.accounts.filter(a=>a.box===b&&a.active)}
 function accountName(id){const a=data.accounts.find(x=>x.id===id);return a?a.name:''}
 let editingAccountId=null;
@@ -235,9 +234,27 @@ function renderAccounts(){
   $('accountSelect').innerHTML='<option value="">Selecione a conta</option>'+list.map(a=>`<option value="${esc(a.id)}">${esc(a.name)} — ${esc(a.bank)}</option>`).join('');
   $('accountBox').innerHTML=`<option value="${esc(currentBox())}">${esc(currentBox())}</option>`;
   $('accountBox').value=currentBox();
-  $('accountsList').innerHTML=list.length?list.map(a=>`<div class="item"><div><strong>${esc(a.name)}</strong><div class="muted">${esc(a.bank)} · Saldo: ${money(a.balance)}</div></div><div><strong>${money(a.balance)}</strong><br><button type="button" class="btn" onclick="editAccount('${esc(a.id)}')">Editar</button> <button type="button" class="btn danger" onclick="deleteAccount('${esc(a.id)}')">Excluir</button></div></div>`).join(''):'<p class="muted">Nenhuma conta ativa neste caixa.</p>';
-  const sortedBanks=list.filter(a=>Number(a.balance||0)!==0).slice().sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
-  $('bankBalances').innerHTML=sortedBanks.length?sortedBanks.map(a=>`<div class="item"><span>${esc(a.name)}</span><strong>${money(a.balance)}</strong></div>`).join(''):'<p class="muted">Nenhuma conta com saldo.</p>';
+  $('accountsList').innerHTML=list.length?list.map(a=>`<div class="item"><div><strong>${esc(a.name)}</strong><div class="muted">${esc(a.bank)} · Saldo: ${money(a.balance)}</div></div><div><strong>${money(a.balance)}</strong><br><button type="button" class="btn" onclick="editAccount('${esc(a.id)}')">Editar</button> <button type="button" class="btn danger" onclick="removeAccount('${esc(a.id)}')">Excluir</button></div></div>`).join(''):'<p class="muted">Nenhuma conta ativa neste caixa.</p>';
+  const sortedBanks=list.slice().sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
+  $('bankBalances').innerHTML=sortedBanks.length?sortedBanks.map(a=>`<div class="item"><span>${esc(a.name)}</span><strong>${money(a.balance)}</strong></div>`).join(''):'<p class="muted">Nenhuma conta cadastrada.</p>';
+}
+function removeAccount(id){
+  const a=data.accounts.find(x=>x.id===id); if(!a)return;
+  const linkedTx=data.tx.filter(t=>t.accountId===id||t.account===a.name).length;
+  const linkedRecurring=(data.recurring||[]).filter(r=>r.accountId===id||r.account===a.name).length;
+  if(linkedTx||linkedRecurring){alert('Não é possível excluir esta conta porque ela está vinculada a dados do aplicativo.\n\nLançamentos: '+linkedTx+'\nRecorrências: '+linkedRecurring);return}
+  if(!confirm('Excluir definitivamente a conta "'+a.name+'"?'))return;
+  data.accounts=data.accounts.filter(x=>x.id!==id); persist(); alert('Conta excluída com sucesso.');
+}
+function removeCard(id){
+  const c=data.cards.find(x=>x.id===id); if(!c)return;
+  const linkedTx=data.tx.filter(t=>t.cardId===id||t.card===c.name).length;
+  const linkedParts=(data.installments||[]).filter(p=>p.cardId===id).length;
+  const linkedInvoices=(data.invoices||[]).filter(i=>i.cardId===id).length;
+  const linkedRecurring=(data.recurring||[]).filter(r=>r.cardId===id||r.card===c.name).length;
+  if(linkedTx||linkedParts||linkedInvoices||linkedRecurring){alert('Não é possível excluir este cartão porque ele está vinculado a dados do aplicativo.\n\nLançamentos: '+linkedTx+'\nParcelas: '+linkedParts+'\nFaturas: '+linkedInvoices+'\nRecorrências: '+linkedRecurring);return}
+  if(!confirm('Excluir definitivamente o cartão "'+c.name+'"?'))return;
+  data.cards=data.cards.filter(x=>x.id!==id); persist(); alert('Cartão excluído com sucesso.');
 }
 if(!Array.isArray(data.applications))data.applications=[];
 function activeApplications(b){return data.applications.filter(a=>a.box===b&&a.active!==false)}
@@ -258,12 +275,10 @@ function renderApplications(){
   const totals=applicationTotals(currentBox());
   const html=apps.length?apps.map(applicationItemHTML).join(''):'<p class="muted">Nenhuma aplicação cadastrada neste caixa.</p>';
   $('applicationsList').innerHTML=html;
-  const sortedApps=apps.filter(a=>Number(a.balance||0)!==0).slice().sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
+  const sortedApps=apps.slice().sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
   $('dashboardApplicationsList').innerHTML=sortedApps.length?sortedApps.map(a=>`<div class="item"><span><strong>${esc(a.institution)} — ${esc(a.description)}</strong><div class="muted">${a.liquidity==='Imediata'?'Liquidez imediata':a.liquidity==='Parcial'?'Liquidez parcial':a.liquidity==='Sem liquidez imediata'?'Sem liquidez imediata':'Liquidez não informada'}</div></span><strong>${money(a.balance)}</strong></div>`).join(''):'';
   $('appTotal').textContent=money(totals.total);
   $('appImmediate').textContent=money(totals.immediate);
-  const immediateRow=$('appImmediate')?.parentElement;
-  if(immediateRow) immediateRow.style.display=totals.immediate>0?'':'none';
 }
 function editApplication(id){
   const a=data.applications.find(x=>x.id===id);
@@ -296,8 +311,7 @@ function removeApplication(id){
   if(editingApplicationId===id)cancelApplicationEdit();
   persist();
 }
-if(!Array.isArray(data.cards))data.cards=[];
-data.cards.forEach(c=>{if(c.box==='Meu Financeiro')c.box='Pessoal'});
+if(!Array.isArray(data.cards))data.cards=[]; data.cards.forEach(c=>{if(c.box==='Meu Financeiro')c.box='Pessoal'});
 
 // Fechamentos confirmados/inferidos a partir das faturas enviadas.
 // Só preenche quando ainda não houver um fechamento salvo pelo usuário.
@@ -319,7 +333,7 @@ function renderCards(){
   $('cardSelect').innerHTML='<option value="">Selecione o cartão</option>'+cards.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.dueDay?' — vence dia '+c.dueDay:''}</option>`).join('');
   $('cardBox').innerHTML=`<option value="${esc(currentBox())}">${esc(currentBox())}</option>`;
   $('cardBox').value=currentBox();
-  $('cardsList').innerHTML=cards.length?cards.map(c=>`<div class="item"><div><strong>${esc(c.name)}</strong><div class="muted">Vencimento: dia ${esc(c.dueDay||'—')} · Fechamento: ${esc(c.closeDay||'não informado')}</div></div><div><button type="button" class="btn danger" onclick="deleteCard('${esc(c.id)}')">Excluir</button></div></div>`).join(''):'<p class="muted">Nenhum cartão ativo neste caixa.</p>';
+  $('cardsList').innerHTML=cards.length?cards.map(c=>`<div class="item"><div><strong>${esc(c.name)}</strong><div class="muted">Vencimento: dia ${esc(c.dueDay||'—')} · Fechamento: ${esc(c.closeDay||'não informado')}</div></div><button type="button" class="btn danger" onclick="removeCard('${esc(c.id)}')">Excluir</button></div>`).join(''):'<p class="muted">Nenhum cartão ativo neste caixa.</p>';
 }
 if(!Array.isArray(data.installments))data.installments=[];
 if(!Array.isArray(data.invoices))data.invoices=[];
@@ -497,7 +511,7 @@ function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 function parseBR(v){let s=String(v??'').trim().replace(/\s/g,'').replace(/R\$/i,'');if(!s)return NaN;if(s.includes(',')){s=s.replace(/\./g,'').replace(',','.')}else{s=s.replace(/\.(?=\d{3}(?:\.|$))/g,'')}return Number(s)}
 function formatInput(){let n=parseBR($('value').value);if(Number.isFinite(n))$('value').value=n.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function signed(t){return t.type==='Despesa'?-Number(t.value):Number(t.value)}
-function currentBox(){if(!Array.isArray(data.boxes)||!data.boxes.length)data.boxes=[...DEFAULT_BOXES];const el=$('dashBox');const value=el&&el.value;if(value&&data.boxes.includes(value))return value;const last=localStorage.getItem(LAST);if(last&&data.boxes.includes(last))return last;return data.boxes[0]||DEFAULT_BOXES[0]}
+function currentBox(){if(!Array.isArray(data.boxes))data.boxes=[];const el=$('dashBox');const value=el&&el.value;if(value&&data.boxes.includes(value))return value;const last=localStorage.getItem(LAST);if(last&&data.boxes.includes(last))return last;return data.boxes[0]||''}
 function boxBalance(b){return activeAccounts(b).reduce((s,a)=>s+Number(a.balance||0),0)}
 function boxAvailableBalance(b){const bank=boxBalance(b);const unassigned=data.tx.filter(t=>t.box===b&&t.status==='Realizado'&&!t.accountId&&t.payment!=='Cartão de crédito'&&t.payment!=='Dinheiro').reduce((s,t)=>s+signed(t),0);return bank+unassigned}
 function applyAccountDelta(accountId,delta){if(!accountId)return;const a=data.accounts.find(x=>x.id===accountId);if(a)a.balance=Number(a.balance||0)+Number(delta||0)}
@@ -600,18 +614,19 @@ function recurringDates(start,end,frequency){
   const limit=end||addMonthsDate(start,12);
   while(d<=limit){
     out.push(d);
-    if(frequency==='Semanal'){const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+7);d=x.toISOString().slice(0,10)}
-    else if(frequency==='Quinzenal'){const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+15);d=x.toISOString().slice(0,10)}
-    else if(frequency==='Mensal')d=addMonthsDate(d,1);
+    if(frequency==='Mensal')d=addMonthsDate(d,1);
     else if(frequency==='Bimestral')d=addMonthsDate(d,2);
     else if(frequency==='Trimestral')d=addMonthsDate(d,3);
     else if(frequency==='Semestral')d=addMonthsDate(d,6);
     else if(frequency==='Anual')d=addMonthsDate(d,12);
+    else if(frequency==='Quinzenal'){const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+15);d=x.toISOString().slice(0,10)}
+    else if(frequency==='Semanal'){const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+7);d=x.toISOString().slice(0,10)}
     else break;
-    if(out.length>120)break;
+    if(out.length>240)break;
   }
   return out;
 }
+
 function refundTotal(purchaseId){
   return data.refunds.filter(r=>r.purchaseId===purchaseId).reduce((s,r)=>s+Number(r.value||0),0);
 }
@@ -724,14 +739,14 @@ renderRecurring();
 let selected=localStorage.getItem(LAST);if(!data.boxes.includes(selected))selected=data.boxes[0];$('dashBox').innerHTML=data.boxes.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');$('dashBox').value=selected;syncSelectedBoxControls();$('historyBox').textContent=selected;
 let bal=boxAvailableBalance(selected),app=applicationTotals(selected).total;let tx=data.tx.filter(t=>t.box===selected);let month=today().slice(0,7);let monthProjected=recurringProjectedTx(selected,month+'-01',month+'-31');let monthAll=[...tx.filter(t=>t.date?.startsWith(month)&&t.status!=='Cancelada'),...monthProjected];let rec=monthAll.filter(t=>t.type==='Receita');let exp=monthAll.filter(t=>t.type==='Despesa');let rr=rec.reduce((s,t)=>s+Number(t.value||0),0),ee=exp.reduce((s,t)=>s+Number(t.value||0),0);let proj=monthAll.filter(t=>t.status==='Previsto').reduce((s,t)=>s+signed(t),0)+bal;
 $('dashboardCards').innerHTML=`<div class="card green"><small>Saldo disponível</small><div class="amount green-amount">${money(bal)}</div><span class="pill">${esc(selected)}</span></div><div class="card blue"><small>Aplicações</small><div class="amount blue-amount">${money(app)}</div></div><div class="card purple"><small>Total financeiro</small><div class="amount purple-amount">${money(bal+app)}</div><span class="mini">Disponível + aplicações</span></div><div class="card amber"><small>Saldo ao final do mês</small><div class="amount amber-amount">${money(proj)}</div><span class="mini">projetado até o fim do mês</span></div>`;
-$('monthSummary').innerHTML=`<div class="card green"><small>Receitas do mês</small><div class="amount">${money(rr)}</div></div><div class="card red"><small>Despesas do mês</small><div class="amount">${money(ee)}</div></div><div class="card"><small>Saldo do mês</small><div class="amount">${money(rr-ee)}</div></div>`;
+const monthBalance=rr-ee; const monthBalanceText=monthBalance<0?'− '+money(Math.abs(monthBalance)):money(monthBalance); $('monthSummary').innerHTML=`<div class="card green"><small>Receitas do mês</small><div class="amount">${money(rr)}</div></div><div class="card red"><small>Despesas do mês</small><div class="amount">${money(ee)}</div></div><div class="card"><small>Saldo do mês</small><div class="amount" style="color:var(--ink)">${monthBalanceText}</div></div>`;
 const monthKeys=monthKeysFromCurrent(6);
 const buildMonthTabs=(id,active)=>$(id).innerHTML=monthKeys.map((m,i)=>`<button type="button" class="month-tab ${m===active?'active':''}" data-month="${m}">${esc(monthNameShort(m))}</button>`).join('');
 let selectedIncomeMonth=month;let selectedDueMonth=month;
 function dashboardMonthItem(t,kind){
   const isIncome=kind==='Receita';
   const action=`<br><button class="btn" onclick="${t.virtualRecurring?(isIncome?'launchProjectedReceipt':'launchProjectedPayment'):(isIncome?'launchReceipt':'launchPayment')}('${t.id}')">${isIncome?'Lançar recebimento':'Lançar pagamento'}</button>`;
-  const meta=`${mcfBRDate(t.date)}${t.payment?' · '+esc(t.payment):''}${t.virtualRecurring?' · 🔄 Recorrente':''}`;
+  const isRecurring=!!(t.virtualRecurring||t.recurring==='Sim'); const meta=`${mcfBRDate(t.date)}${t.payment?' · '+esc(t.payment):''}${isRecurring?' · 🔄 Recorrente':''}`;
   return `<div class="item"><div><strong>${esc(t.desc)}</strong><div class="muted">${meta}</div></div><div style="text-align:right"><strong class="${isIncome?'positive':'negative'}">${money(Number(t.value||0)*(isIncome?1:-1))}</strong>${action}</div></div>`;
 }
 function renderIncomeMonth(){const items=monthlyDashboardItems(selected,selectedIncomeMonth,'Receita');$('incomeDueCount').textContent=items.length;$('incomeDueList').innerHTML=items.map(t=>dashboardMonthItem(t,'Receita')).join('')||'Nenhum recebimento previsto neste mês.';}
@@ -784,10 +799,8 @@ if(editingId){
   let recurrenceChoice=null;
   if(old.recurring==='Sim'){
     recurrenceRecord=(data.recurring||[]).find(r=>
-      r.box===old.box &&
-      r.type===old.type &&
-      r.desc===old.desc &&
-      r.startDate===old.date
+      (old.recurringId&&r.id===old.recurringId) ||
+      (r.box===old.box && r.type===old.type && r.desc===old.desc && (r.startDate===old.date || !r.endDate))
     );
     if(recurrenceRecord){
       recurrenceChoice=prompt(
@@ -810,7 +823,7 @@ if(editingId){
   Object.assign(edited,rec);
 
   if(recurrenceRecord&&recurrenceChoice==='1'){
-    edited.recurring='Não';
+    edited.recurring='Não'; edited.recurringId='';
   }else if(recurrenceRecord&&recurrenceChoice==='2'){
     Object.assign(recurrenceRecord,{
       box:rec.box,
@@ -827,7 +840,7 @@ if(editingId){
       endDate:rec.endDate||'',
       active:true
     });
-    edited.recurring='Sim';
+    edited.recurring='Sim'; edited.recurringId=recurrenceRecord.id;
   }
 
   if(affectsAccount(edited)) applyAccountDelta(edited.accountId,signed(edited));
@@ -838,14 +851,15 @@ if(editingId){
 }else{
   if(rec.recurring==='Sim'){data.recurring.push({id:'rr_'+Date.now(),box:rec.box,type:rec.type,desc:rec.desc,party:rec.party||'',value:rec.value,category:rec.category,payment:rec.payment,accountId:rec.accountId||'',cardId:rec.cardId||'',frequency:rec.frequency,startDate:rec.date,endDate:rec.endDate||'',active:true});}
   const id=crypto.randomUUID?crypto.randomUUID():String(Date.now());
-  data.tx.push({id,...rec});
+  let recurringId=''; if(rec.recurring==='Sim'){recurringId='rr_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); data.recurring[data.recurring.length-1].id=recurringId;}
+  data.tx.push({id,...rec,recurringId});
   if(affectsAccount(rec)) applyAccountDelta(rec.accountId,signed(rec));
   if(rec.type==='Despesa'&&rec.payment==='Cartão de crédito'&&rec.cardId){
     const card=cardById(rec.cardId), n=rec.installmentType==='Parcelada'?Math.max(2,rec.installments||2):1, vals=splitCents(rec.value,n), first=invoiceMonth(card,rec.date);
     vals.forEach((v,i)=>data.installments.push({id:'par_'+id+'_'+(i+1),purchaseId:id,cardId:rec.cardId,number:i+1,total:n,value:v,month:monthAdd(first,i),date:rec.date,status:'Previsto'}));
   }
 }
-const wasEditing=!!editingId;clearDraft();localStorage.setItem(LAST,rec.box);cancelEdit(false);persist();e.target.reset();$('date').value=today();$('type').value='Despesa';$('status').value='Realizado';updateTypeUI();$('cardWrap').classList.add('hidden');$('installmentWrap').classList.add('hidden');$('recurringWrap').classList.add('hidden');showSaveSuccess(wasEditing?'Alterações salvas com sucesso.':'Lançamento registrado com sucesso.');};
+const wasEditing=!!editingId;clearDraft();localStorage.setItem(LAST,rec.box);cancelEdit(false);persist();e.target.reset();$('date').value=today();$('type').value='Despesa';$('status').value='Realizado';updateTypeUI();$('cardWrap').classList.add('hidden');$('installmentWrap').classList.add('hidden');$('recurringWrap').classList.add('hidden');showSaveSuccess(wasEditing?'Lançamento atualizado com sucesso.':'Lançamento registrado com sucesso.');};
 function editTx(id){let t=data.tx.find(x=>x.id===id);if(!t)return;editingId=id;showTab('lancamentos');$('type').value=t.type;$('desc').value=t.desc;$('party').value=partyName(t);$('value').value=Number(t.value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});$('date').value=t.date;$('box').value=t.box;$('status').value=t.status;$('category').value=t.category||'';$('payment').value=t.payment||'Pix';$('accountSelect').value=t.accountId||'';$('cardSelect').value=t.cardId||'';$('installmentType').value=t.installmentType||'À vista';$('installments').value=t.installments||'';$('recurring').value=t.recurring||'Não';$('frequency').value=t.frequency||'Mensal';$('endDate').value=t.endDate||'';$('note').value=t.note||'';updateTypeUI();$('payment').dispatchEvent(new Event('change'));$('installmentType').dispatchEvent(new Event('change'));$('recurring').dispatchEvent(new Event('change'));$('saveTxBtn').textContent='Salvar alterações';$('cancelEditBtn').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})}
 function cancelEdit(reset=true){editingId=null;$('saveTxBtn').textContent='Salvar lançamento';$('cancelEditBtn').classList.add('hidden');if(reset){$('txForm').reset();$('date').value=today();$('cardWrap').classList.add('hidden');$('installmentWrap').classList.add('hidden');$('recurringWrap').classList.add('hidden')}}$('cancelEditBtn').onclick=()=>cancelEdit();
 function removeTx(id){if(confirm('Excluir este lançamento?')){const old=data.tx.find(t=>t.id===id);if(affectsAccount(old))applyAccountDelta(old.accountId,-signed(old));if(old&&old.recurring==='Sim'){data.recurring=data.recurring.filter(r=>!(r.box===old.box&&r.type===old.type&&r.desc===old.desc&&r.startDate===old.date));}data.tx=data.tx.filter(t=>t.id!==id);data.installments=data.installments.filter(p=>p.purchaseId!==id);persist()}}$('boxForm').onsubmit=e=>{e.preventDefault();const input=$('boxName');const n=input.value.trim();if(!n)return;if(data.boxes.some(b=>String(b).toLowerCase()===n.toLowerCase())){alert('Esse caixa já existe.');return}data.boxes.push(n);localStorage.setItem(LAST,n);input.value='';persist();alert('Caixa adicionado com sucesso.');};function renameBox(i){
@@ -873,36 +887,30 @@ function removeTx(id){if(confirm('Excluir este lançamento?')){const old=data.tx
 function deleteBox(i){
   const box=data.boxes[i];
   if(box==null)return;
-  if(data.boxes.length<=1){
-    alert('Não é possível excluir o único caixa do aplicativo.');
-    return;
-  }
-  if(currentBox()===box){
-    alert('Antes de excluir este caixa, selecione outro caixa no painel Visão geral.');
-    return;
-  }
+  if(data.boxes.length<=1){alert('Não é possível excluir o único caixa do aplicativo.');return}
+  if(currentBox()===box){alert('Antes de excluir este caixa, selecione outro caixa no painel Visão geral.');return}
   const txCount=data.tx.filter(t=>t.box===box).length;
   const accountCount=data.accounts.filter(a=>a.box===box).length;
   const cardCount=data.cards.filter(c=>c.box===box).length;
   const appCount=data.applications.filter(a=>a.box===box).length;
   const recurringCount=data.recurring.filter(r=>r.box===box).length;
   const total=txCount+accountCount+cardCount+appCount+recurringCount;
-  if(total>0){
-    alert('Este caixa ainda possui dados cadastrados. Por segurança, ele só pode ser excluído quando estiver vazio.\n\nLançamentos: '+txCount+'\nContas: '+accountCount+'\nCartões: '+cardCount+'\nAplicações: '+appCount+'\nRecorrências: '+recurringCount);
-    return;
-  }
+  if(total>0){alert('Este caixa ainda possui dados cadastrados. Por segurança, ele só pode ser excluído quando estiver vazio.\n\nLançamentos: '+txCount+'\nContas: '+accountCount+'\nCartões: '+cardCount+'\nAplicações: '+appCount+'\nRecorrências: '+recurringCount);return}
   const confirmName=prompt('Para excluir o caixa "'+box+'", digite exatamente o nome dele:');
   if(confirmName===null)return;
-  if(confirmName.trim()!==box){
-    alert('O nome digitado não corresponde. O caixa não foi excluído.');
-    return;
-  }
+  if(confirmName.trim()!==box){alert('O nome digitado não corresponde. O caixa não foi excluído.');return}
   if(!confirm('Excluir definitivamente o caixa "'+box+'"?'))return;
   data.boxes.splice(i,1);
-  if(localStorage.getItem(LAST)===box)localStorage.setItem(LAST,data.boxes[0]);
-  persist();
-  alert('Caixa excluído com sucesso.');
+  const next=data.boxes[0];
+  localStorage.setItem(LAST,next);
+  try{
+    data=normalizeData(data);
+    localStorage.setItem(KEY,JSON.stringify(data));
+    render();
+    alert('Caixa excluído com sucesso.');
+  }catch(e){alert('Não foi possível concluir a exclusão do caixa.');}
 }
+
 
 $('accountForm').onsubmit=e=>{
 e.preventDefault();
@@ -944,36 +952,6 @@ function cancelAccountEdit(){
   $('accountBank').value='';$('accountName').value='';$('accountBalance').value='';
   $('accountForm').querySelector('button[type="submit"]').textContent='Adicionar conta';
   const c=$('cancelAccountEdit'); if(c) c.remove();
-}
-
-function deleteAccount(id){
-  const a=data.accounts.find(x=>x.id===id);
-  if(!a)return;
-  const txRefs=data.tx.filter(t=>t.accountId===id).length;
-  const invoiceRefs=data.invoices.filter(i=>i.paidAccountId===id).length;
-  if(txRefs||invoiceRefs){
-    alert('Esta conta não pode ser excluída porque está vinculada a dados existentes.\n\nLançamentos: '+txRefs+'\nPagamentos de fatura: '+invoiceRefs);
-    return;
-  }
-  if(!confirm(`Excluir a conta "${a.name}"?`))return;
-  data.accounts=data.accounts.filter(x=>x.id!==id);
-  if(editingAccountId===id)cancelAccountEdit();
-  persist();
-}
-
-function deleteCard(id){
-  const c=data.cards.find(x=>x.id===id);
-  if(!c)return;
-  const txRefs=data.tx.filter(t=>t.cardId===id).length;
-  const installmentRefs=data.installments.filter(p=>p.cardId===id).length;
-  const invoiceRefs=data.invoices.filter(i=>i.cardId===id).length;
-  if(txRefs||installmentRefs||invoiceRefs){
-    alert('Este cartão não pode ser excluído porque está vinculado a dados existentes.\n\nLançamentos: '+txRefs+'\nParcelas: '+installmentRefs+'\nFaturas: '+invoiceRefs);
-    return;
-  }
-  if(!confirm(`Excluir o cartão "${c.name}"?`))return;
-  data.cards=data.cards.filter(x=>x.id!==id);
-  persist();
 }
 
 $('applicationForm').onsubmit=e=>{
