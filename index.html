@@ -216,10 +216,10 @@
 <p class="muted">Por segurança, o PIN não é incluído nos backups. Os backups guardam somente os dados financeiros.</p>
 </div></section>
 <section id="backup" class="hidden"><div class="panel"><h2>Backup e recuperação</h2><p>Faça um backup completo dos dados deste aparelho. O arquivo é salvo em formato JSON. No iPhone, ao tocar em <b>Exportar backup</b>, você poderá escolher onde guardar o arquivo, inclusive em <b>Arquivos</b> e, se disponível no aparelho, no <b>Google Drive</b>.</p><div id="backupInfo" class="notice"></div><div class="backup-actions"><button class="backup-action export" type="button" onclick="exportData()">📤 Exportar backup</button><button class="backup-action file" type="button" onclick="$('restoreFile').click()">📂 Restaurar backup de um arquivo</button><button class="backup-action auto" type="button" onclick="restoreAutoBackup()">♻️ Restaurar última cópia automática</button><button class="backup-action update" type="button" onclick="updateAppVersion()">🔄 Atualizar versão do aplicativo</button></div><input class="backup-file-input" type="file" id="restoreFile" accept=".json,application/json"><p class="muted backup-help">Para restaurar um arquivo, toque em <b>Restaurar backup de um arquivo</b> e escolha o backup .json salvo anteriormente. Antes da restauração, o aplicativo cria automaticamente uma cópia de segurança local dos dados atuais.</p><div class="notice" style="margin-top:10px"><strong>🔄 Atualização:</strong> ao tocar em Atualizar versão, o aplicativo cria uma cópia automática dos dados deste navegador e recarrega a página tentando buscar o arquivo mais recente publicado. Para maior segurança, exporte também um backup em arquivo antes de atualizar. O botão não permite manter versões antigas instaladas; ele recarrega a versão que estiver publicada no site.</div><div class="notice" style="margin-top:10px"><strong>🔐 Migração segura:</strong> versões futuras podem migrar os dados em etapas. Antes de uma migração de estrutura, o aplicativo cria uma cópia automática dos dados atuais.</div><div class="notice" style="margin-top:10px"><strong>📱 Atenção no iPhone:</strong> o acesso pelo ícone da Tela de Início e o acesso pelo Safari usam armazenamentos separados. Para levar os mesmos dados de um para o outro, use o backup.</div></div></section>
-<footer>Versão 48 • Correção da edição de recorrências e apresentação das aplicações.</footer>
+<footer>Versão 49 • Correção do salvamento e edição de projeções recorrentes.</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=48;const SCHEMA=9;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=49;const SCHEMA=10;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
 // Compara nomes ignorando acentos, maiúsculas/minúsculas e espaços repetidos, sem alterar o texto salvo.
 function compareKey(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/\s+/g,' ').trim()}
@@ -903,29 +903,20 @@ if(editingId){
   if(!old){alert('Não foi possível localizar o lançamento para edição.');return}
 
   let recurrenceRecord=null;
-  let recurrenceChoice=null;
+  let recurrenceChoice='1';
   if(old.recurring==='Sim'){
     recurrenceRecord=(data.recurring||[]).find(r=>r.active!==false&&r.box===old.box&&r.type===old.type&&sameText(r.desc,old.desc)&&sameText(r.party||'',partyName(old)||''))
       ||(data.recurring||[]).find(r=>r.active!==false&&r.box===old.box&&r.type===old.type&&sameText(r.desc,old.desc));
     if(recurrenceRecord){
-      recurrenceChoice=confirm('Este lançamento está ligado a uma recorrência.\n\nOK: atualizar este lançamento e os próximos da recorrência.\nCancelar: alterar somente este lançamento, mantendo a recorrência futura como está.');
-      recurrenceChoice=recurrenceChoice?'2':'1';
+      recurrenceChoice=confirm('Este lançamento está ligado a uma recorrência.\n\nOK: atualizar somente as próximas ocorrências, preservando o histórico já realizado.\nCancelar: alterar somente este lançamento, sem mudar a recorrência futura.')?'2':'1';
     }
   }
 
-  if(affectsAccount(old)) applyAccountDelta(old.accountId,-signed(old));
-  data.installments=data.installments.filter(p=>p.purchaseId!==editingId);
-
-  const edited=data.tx.find(t=>t.id===editingId);
-  if(!edited){alert('Não foi possível localizar o lançamento para salvar as alterações.');return}
-  Object.assign(edited,rec);
-
-  if(recurrenceRecord&&recurrenceChoice==='1'){
-    // Edição pontual não deve desligar nem modificar a regra dos próximos meses.
-    edited.recurring='Não';
-  }else if(recurrenceRecord&&recurrenceChoice==='2'){
+  const updateFutureOnly=!!(recurrenceRecord&&recurrenceChoice==='2'&&old.status==='Realizado');
+  if(updateFutureOnly){
+    // Atualiza a regra da recorrência, sem tocar no lançamento realizado que serviu de referência.
     Object.assign(recurrenceRecord,{
-      box:rec.box,
+      box:old.box,
       type:rec.type,
       desc:rec.desc,
       party:rec.party||'',
@@ -938,15 +929,29 @@ if(editingId){
       endDate:rec.endDate||'',
       active:true
     });
-    // Preserve the original recurrence start date so the schedule does not shift
-    // just because an already completed occurrence was edited.
-    edited.recurring='Sim';
-  }
-
-  if(affectsAccount(edited)) applyAccountDelta(edited.accountId,signed(edited));
-  if(edited.type==='Despesa'&&edited.payment==='Cartão de crédito'&&edited.cardId){
-    const card=cardById(edited.cardId), n=edited.installmentType==='Parcelada'?Math.max(2,edited.installments||2):1, vals=splitCents(edited.value,n), first=invoiceMonth(card,edited.date);
-    vals.forEach((v,i)=>data.installments.push({id:'par_'+editingId+'_'+(i+1),purchaseId:editingId,cardId:edited.cardId,number:i+1,total:n,value:v,month:monthAdd(first,i),date:edited.date,status:'Previsto'}));
+  }else{
+    if(affectsAccount(old)) applyAccountDelta(old.accountId,-signed(old));
+    data.installments=data.installments.filter(p=>p.purchaseId!==editingId);
+    const edited=data.tx.find(t=>t.id===editingId);
+    if(!edited){alert('Não foi possível localizar o lançamento para salvar as alterações.');return}
+    Object.assign(edited,rec);
+    if(recurrenceRecord&&recurrenceChoice==='1'){
+      // A edição pontual não altera a regra futura; preserva o indicador de recorrência no histórico.
+      edited.recurring=old.recurring||'Não';
+    }else if(recurrenceRecord&&recurrenceChoice==='2'){
+      Object.assign(recurrenceRecord,{
+        box:rec.box,type:rec.type,desc:rec.desc,party:rec.party||'',value:rec.value,
+        category:rec.category,payment:rec.payment,accountId:rec.accountId||'',cardId:rec.cardId||'',
+        frequency:rec.frequency,endDate:rec.endDate||'',active:true
+      });
+      // Mantém a âncora original da recorrência e atualiza esta ocorrência prevista.
+      edited.recurring='Sim';
+    }
+    if(affectsAccount(edited)) applyAccountDelta(edited.accountId,signed(edited));
+    if(edited.type==='Despesa'&&edited.payment==='Cartão de crédito'&&edited.cardId){
+      const card=cardById(edited.cardId), n=edited.installmentType==='Parcelada'?Math.max(2,edited.installments||2):1, vals=splitCents(edited.value,n), first=invoiceMonth(card,edited.date);
+      vals.forEach((v,i)=>data.installments.push({id:'par_'+editingId+'_'+(i+1),purchaseId:editingId,cardId:edited.cardId,number:i+1,total:n,value:v,month:monthAdd(first,i),date:edited.date,status:'Previsto'}));
+    }
   }
 }else{
   if(rec.recurring==='Sim'){data.recurring.push({id:'rr_'+Date.now(),box:rec.box,type:rec.type,desc:rec.desc,party:rec.party||'',value:rec.value,category:rec.category,payment:rec.payment,accountId:rec.accountId||'',cardId:rec.cardId||'',frequency:rec.frequency,startDate:rec.date,endDate:rec.endDate||'',active:true});}
@@ -959,6 +964,16 @@ if(editingId){
   }
 }
 const wasEditing=!!editingId;clearDraft();localStorage.setItem(LAST,rec.box);persistTransaction();cancelEdit(false);e.target.reset();$('date').value=today();$('type').value='Despesa';$('status').value='Realizado';updateTypeUI();$('cardWrap').classList.add('hidden');$('installmentWrap').classList.add('hidden');$('recurringWrap').classList.add('hidden');let renderOk=true;try{render()}catch(renderErr){renderOk=false;console.error('Lançamento salvo, mas a tela não pôde ser atualizada:',renderErr)}showSaveSuccess(wasEditing?'Alterações salvas com sucesso.':'Lançamento registrado com sucesso.');if(!renderOk){const notice=$('draftNotice');notice.textContent='✅ O lançamento foi salvo com sucesso, mas a tela teve um erro ao atualizar. Recarregue a página para conferir.';notice.classList.remove('hidden');notice.style.background='#fff4df';notice.style.color='#7a4b00';}}catch(err){console.error('Erro ao salvar lançamento:',err);alert('Não foi possível salvar o lançamento. Seus dados não foram confirmados. Detalhe: '+(err&&err.message?err.message:'erro inesperado')+'. Confira os campos e tente novamente.');}};
+// No iOS/Safari, use um acionamento explícito para que o botão nunca pareça ignorar o toque.
+$('saveTxBtn').type='button';
+$('saveTxBtn').onclick=()=>{
+  const form=$('txForm');
+  if(!$('desc').value.trim()){alert('Informe a descrição do lançamento.');$('desc').focus();return}
+  if(!$('date').value){alert('Informe a data do lançamento.');$('date').focus();return}
+  const amount=parseBR($('value').value);
+  if(!Number.isFinite(amount)||amount<=0){alert('Digite um valor válido, por exemplo 230 ou 230,30.');$('value').focus();return}
+  form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+};
 function editTx(id){let t=data.tx.find(x=>x.id===id);if(!t)return;editingId=id;showTab('lancamentos');$('type').value=t.type;$('desc').value=t.desc;$('party').value=partyName(t);$('value').value=Number(t.value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});$('date').value=t.date;$('box').value=t.box;$('status').value=t.status;$('category').value=t.category||'';$('payment').value=t.payment||'Pix';$('accountSelect').value=t.accountId||'';$('cardSelect').value=t.cardId||'';$('installmentType').value=t.installmentType||'À vista';$('installments').value=t.installments||'';$('recurring').value=t.recurring||'Não';$('frequency').value=t.frequency||'Mensal';$('endDate').value=t.endDate||'';$('note').value=t.note||'';updateTypeUI();$('payment').dispatchEvent(new Event('change'));$('installmentType').dispatchEvent(new Event('change'));$('recurring').dispatchEvent(new Event('change'));$('saveTxBtn').textContent='Salvar alterações';$('cancelEditBtn').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})}
 function cancelEdit(reset=true){editingId=null;$('saveTxBtn').textContent='Salvar lançamento';$('cancelEditBtn').classList.add('hidden');if(reset){$('txForm').reset();$('date').value=today();$('cardWrap').classList.add('hidden');$('installmentWrap').classList.add('hidden');$('recurringWrap').classList.add('hidden')}}$('cancelEditBtn').onclick=()=>cancelEdit();
 function removeTx(id){if(confirm('Excluir este lançamento?')){const old=data.tx.find(t=>t.id===id);if(affectsAccount(old))applyAccountDelta(old.accountId,-signed(old));if(old&&old.recurring==='Sim'){data.recurring=data.recurring.filter(r=>!(r.box===old.box&&r.type===old.type&&sameText(r.desc,old.desc)&&r.startDate===old.date));}data.tx=data.tx.filter(t=>t.id!==id);data.installments=data.installments.filter(p=>p.purchaseId!==id);persist()}}$('boxForm').onsubmit=e=>{e.preventDefault();const input=$('boxName');const n=input.value.trim();if(!n)return;if(data.boxes.some(b=>sameText(b,n))){alert('Esse caixa já existe.');return}data.boxes.push(n);localStorage.setItem(LAST,n);input.value='';persist();alert('Caixa adicionado com sucesso.');};function renameBox(i){
