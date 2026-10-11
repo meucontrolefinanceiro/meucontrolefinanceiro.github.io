@@ -106,7 +106,7 @@
 .month-tabs{display:flex;gap:6px;overflow:auto;margin:8px 0 10px;padding-bottom:2px}.month-tab{border:0;border-radius:999px;padding:8px 11px;background:#e7f2ed;color:var(--green);font-weight:800;white-space:nowrap}.month-tab.active{background:var(--green);color:#fff}.month-tab:disabled{opacity:.45}
 </style>
 
-<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 51</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
+<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 52</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
 <main>
 <nav><button class="active" data-tab="inicio">Visão geral</button><button data-tab="lancamentos">Lançamentos</button><button data-tab="cadastros">Cadastros</button><button data-tab="relatorios">Relatórios</button><button data-tab="backup">Backup</button><button data-tab="seguranca">Segurança</button></nav>
 <section id="inicio">
@@ -131,7 +131,7 @@
 <div class="row"><div><label>Caixa selecionado</label><select id="box" disabled></select></div><div><label>Situação</label><select id="status"><option selected>Realizado</option><option>Previsto</option></select></div></div>
 <label>Categoria (opcional)</label>
 <div class="mcf-cat-wrap"><input id="category" autocomplete="off" placeholder="Digite ou escolha uma categoria"><button type="button" id="mcfCategoryArrow" class="mcf-cat-arrow" aria-label="Mostrar categorias">⌄</button><div id="mcfCategorySuggestions" class="mcf-cat-dropdown hidden"></div></div>
-<div id="paymentWrap"><label id="paymentLabel">Forma de pagamento</label><select id="payment"><option>Pix</option><option>Dinheiro</option><option>Débito</option><option>Cartão de crédito</option><option>Outro</option></select></div>
+<div id="paymentWrap"><label id="paymentLabel">Forma de pagamento</label><select id="payment"><option value="">Selecione a forma de pagamento</option><option>Pix</option><option>Dinheiro</option><option>Débito</option><option>Cartão de crédito</option><option>Outro</option></select></div>
 <div id="accountWrap"><label id="accountLabel">Conta utilizada</label><select id="accountSelect"><option value="">Selecione a conta</option></select></div>
 <div id="cardWrap" class="hidden"><label>Cartão de crédito</label><select id="cardSelect"><option value="">Selecione o cartão</option></select>
 <label>Compra</label><select id="installmentType"><option>À vista</option><option>Parcelada</option></select><div id="installmentWrap" class="hidden"><label>Número de parcelas</label><input id="installments" type="number" min="2" step="1" inputmode="numeric" placeholder="6"><div id="parcelPreview" class="muted"></div></div><div id="invoicePreview" class="muted"></div></div>
@@ -216,10 +216,10 @@
 <p class="muted">Por segurança, o PIN não é incluído nos backups. Os backups guardam somente os dados financeiros.</p>
 </div></section>
 <section id="backup" class="hidden"><div class="panel"><h2>Backup e recuperação</h2><p>Faça um backup completo dos dados deste aparelho. O arquivo é salvo em formato JSON. No iPhone, ao tocar em <b>Exportar backup</b>, você poderá escolher onde guardar o arquivo, inclusive em <b>Arquivos</b> e, se disponível no aparelho, no <b>Google Drive</b>.</p><div id="backupInfo" class="notice"></div><div class="backup-actions"><button class="backup-action export" type="button" onclick="exportData()">📤 Exportar backup</button><button class="backup-action file" type="button" onclick="$('restoreFile').click()">📂 Restaurar backup de um arquivo</button><button class="backup-action auto" type="button" onclick="restoreAutoBackup()">♻️ Restaurar última cópia automática</button><button class="backup-action update" type="button" onclick="updateAppVersion()">🔄 Atualizar versão do aplicativo</button></div><input class="backup-file-input" type="file" id="restoreFile" accept=".json,application/json"><p class="muted backup-help">Para restaurar um arquivo, toque em <b>Restaurar backup de um arquivo</b> e escolha o backup .json salvo anteriormente. Antes da restauração, o aplicativo cria automaticamente uma cópia de segurança local dos dados atuais.</p><div class="notice" style="margin-top:10px"><strong>🔄 Atualização:</strong> ao tocar em Atualizar versão, o aplicativo cria uma cópia automática dos dados deste navegador e recarrega a página tentando buscar o arquivo mais recente publicado. Para maior segurança, exporte também um backup em arquivo antes de atualizar. O botão não permite manter versões antigas instaladas; ele recarrega a versão que estiver publicada no site.</div><div class="notice" style="margin-top:10px"><strong>🔐 Migração segura:</strong> versões futuras podem migrar os dados em etapas. Antes de uma migração de estrutura, o aplicativo cria uma cópia automática dos dados atuais.</div><div class="notice" style="margin-top:10px"><strong>📱 Atenção no iPhone:</strong> o acesso pelo ícone da Tela de Início e o acesso pelo Safari usam armazenamentos separados. Para levar os mesmos dados de um para o outro, use o backup.</div></div></section>
-<footer>Versão 51 • Correção da identificação de compras por cartão nas faturas.</footer>
+<footer>Versão 52 • Forma de pagamento sem seleção automática e ajuste das datas recorrentes.</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=51;const SCHEMA=10;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=52;const SCHEMA=10;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
 // Compara nomes ignorando acentos, maiúsculas/minúsculas e espaços repetidos, sem alterar o texto salvo.
 function compareKey(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/\s+/g,' ').trim()}
@@ -493,7 +493,7 @@ window.addEventListener('pagehide',()=>{
 
 const draftFields=['type','desc','party','value','date','box','status','category','payment','accountSelect','cardSelect','installmentType','installments','recurring','frequency','endDate','note'];
 function draftHasMeaningfulContent(d){
-  const defaults={type:'Despesa',desc:'',party:'',value:'',date:today(),box:currentBox(),status:'Realizado',category:'',payment:'Pix',accountSelect:'',cardSelect:'',installmentType:'À vista',installments:'',recurring:'Não',frequency:'Mensal',endDate:'',note:''};
+  const defaults={type:'Despesa',desc:'',party:'',value:'',date:today(),box:currentBox(),status:'Realizado',category:'',payment:'',accountSelect:'',cardSelect:'',installmentType:'À vista',installments:'',recurring:'Não',frequency:'Mensal',endDate:'',note:''};
   return draftFields.some(id=>String(d[id]??'')!==String(defaults[id]??''));
 }
 function saveDraft(){
@@ -654,19 +654,22 @@ function addMonthsDate(date,n){
   return dt.toISOString().slice(0,10);
 }
 function recurringDates(start,end,frequency){
-  const out=[];let d=start;
+  const out=[];if(!start)return out;
   const limit=end||addMonthsDate(start,12);
+  const [sy,sm,sd]=String(start).split('-').map(Number);
+  const anchoredMonth=(offset)=>{const first=new Date(sy,sm-1+offset,1);const last=new Date(first.getFullYear(),first.getMonth()+1,0).getDate();return `${first.getFullYear()}-${String(first.getMonth()+1).padStart(2,'0')}-${String(Math.min(sd,last)).padStart(2,'0')}`};
+  let i=0,d=start;
   while(d<=limit){
-    out.push(d);
-    if(frequency==='Mensal')d=addMonthsDate(d,1);
-    else if(frequency==='Bimestral')d=addMonthsDate(d,2);
-    else if(frequency==='Trimestral')d=addMonthsDate(d,3);
-    else if(frequency==='Semestral')d=addMonthsDate(d,6);
-    else if(frequency==='Anual')d=addMonthsDate(d,12);
-    else if(frequency==='Quinzenal'){const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+15);d=x.toISOString().slice(0,10)}
-    else if(frequency==='Semanal'){const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+7);d=x.toISOString().slice(0,10)}
+    out.push(d);i++;
+    if(frequency==='Mensal')d=anchoredMonth(i);
+    else if(frequency==='Bimestral')d=anchoredMonth(i*2);
+    else if(frequency==='Trimestral')d=anchoredMonth(i*3);
+    else if(frequency==='Semestral')d=anchoredMonth(i*6);
+    else if(frequency==='Anual')d=anchoredMonth(i*12);
+    else if(frequency==='Quinzenal'){const x=new Date(start+'T12:00:00');x.setDate(x.getDate()+i*15);d=x.toISOString().slice(0,10)}
+    else if(frequency==='Semanal'){const x=new Date(start+'T12:00:00');x.setDate(x.getDate()+i*7);d=x.toISOString().slice(0,10)}
     else break;
-    if(out.length>240)break;
+    if(i>240)break;
   }
   return out;
 }
@@ -911,7 +914,7 @@ function showSaveSuccess(message){
   window.scrollTo({top:0,behavior:'smooth'});
   setTimeout(()=>{if(el){el.classList.add('hidden');el.style.background='';el.style.color='';el.style.border='';}},3500);
 }
-$('txForm').onsubmit=e=>{e.preventDefault();try{let v=parseBR($('value').value);if(!Number.isFinite(v)||v<=0){alert('Digite um valor válido, por exemplo 230 ou 230,30.');return}let income=$('type').value==='Receita';let rec;try{rec={type:$('type').value,desc:$('desc').value.trim(),party:$('party').value.trim(),value:v,date:$('date').value,box:$('box').value,status:$('status').value,category:(function(){const q=$('category').value.trim();if(!q)return '';const n=q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');const syn={'tv':'Assinaturas e streaming','streaming':'Assinaturas e streaming','netflix':'Assinaturas e streaming','mercado':'Supermercado','gasolina':'Combustível','farmacia':'Farmácia','restaurante':'Restaurantes e refeições','internet':'Telefone e internet'};const wanted=syn[n]||q;const a=Array.isArray(data.categories)?data.categories:[];const hit=a.find(c=>sameText(c?.name||c,wanted)&&c?.type===($('type').value));if(q&&!hit){throw new Error('CATEGORY_TYPE_MISMATCH')}return hit?hit.name:''})(),payment:income?'':$('payment').value,accountId:$('accountSelect').value||'',cardId:income?'':$('cardSelect').value||'',installmentType:income?'À vista':$('installmentType').value,installments:income?1:parseInt($('installments').value||1),recurring:$('recurring').value,frequency:$('frequency').value,endDate:$('endDate').value,note:$('note').value.trim()};}catch(err){if(err&&err.message==='CATEGORY_TYPE_MISMATCH'){alert('Selecione uma categoria compatível com o tipo do lançamento.');return}throw err}
+$('txForm').onsubmit=e=>{e.preventDefault();try{let v=parseBR($('value').value);if(!Number.isFinite(v)||v<=0){alert('Digite um valor válido, por exemplo 230 ou 230,30.');return}let income=$('type').value==='Receita';if(!income&&!$('payment').value){alert('Selecione a forma de pagamento antes de salvar.');$('payment').focus();return}let rec;try{rec={type:$('type').value,desc:$('desc').value.trim(),party:$('party').value.trim(),value:v,date:$('date').value,box:$('box').value,status:$('status').value,category:(function(){const q=$('category').value.trim();if(!q)return '';const n=q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');const syn={'tv':'Assinaturas e streaming','streaming':'Assinaturas e streaming','netflix':'Assinaturas e streaming','mercado':'Supermercado','gasolina':'Combustível','farmacia':'Farmácia','restaurante':'Restaurantes e refeições','internet':'Telefone e internet'};const wanted=syn[n]||q;const a=Array.isArray(data.categories)?data.categories:[];const hit=a.find(c=>sameText(c?.name||c,wanted)&&c?.type===($('type').value));if(q&&!hit){throw new Error('CATEGORY_TYPE_MISMATCH')}return hit?hit.name:''})(),payment:income?'':$('payment').value,accountId:$('accountSelect').value||'',cardId:income?'':$('cardSelect').value||'',installmentType:income?'À vista':$('installmentType').value,installments:income?1:parseInt($('installments').value||1),recurring:$('recurring').value,frequency:$('frequency').value,endDate:$('endDate').value,note:$('note').value.trim()};}catch(err){if(err&&err.message==='CATEGORY_TYPE_MISMATCH'){alert('Selecione uma categoria compatível com o tipo do lançamento.');return}throw err}
 if(editingId){
   const old=data.tx.find(t=>t.id===editingId);
   if(!old){alert('Não foi possível localizar o lançamento para edição.');return}
@@ -988,7 +991,7 @@ $('saveTxBtn').onclick=()=>{
   if(!Number.isFinite(amount)||amount<=0){alert('Digite um valor válido, por exemplo 230 ou 230,30.');$('value').focus();return}
   form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
 };
-function editTx(id){let t=data.tx.find(x=>x.id===id);if(!t)return;editingId=id;showTab('lancamentos');$('type').value=t.type;$('desc').value=t.desc;$('party').value=partyName(t);$('value').value=Number(t.value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});$('date').value=t.date;$('box').value=t.box;$('status').value=t.status;$('category').value=t.category||'';$('payment').value=t.payment||'Pix';$('accountSelect').value=t.accountId||'';$('cardSelect').value=t.cardId||'';$('installmentType').value=t.installmentType||'À vista';$('installments').value=t.installments||'';$('recurring').value=t.recurring||'Não';$('frequency').value=t.frequency||'Mensal';$('endDate').value=t.endDate||'';$('note').value=t.note||'';updateTypeUI();$('payment').dispatchEvent(new Event('change'));$('installmentType').dispatchEvent(new Event('change'));$('recurring').dispatchEvent(new Event('change'));$('saveTxBtn').textContent='Salvar alterações';$('cancelEditBtn').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})}
+function editTx(id){let t=data.tx.find(x=>x.id===id);if(!t)return;editingId=id;showTab('lancamentos');$('type').value=t.type;$('desc').value=t.desc;$('party').value=partyName(t);$('value').value=Number(t.value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});$('date').value=t.date;$('box').value=t.box;$('status').value=t.status;$('category').value=t.category||'';$('payment').value=t.payment||'';$('accountSelect').value=t.accountId||'';$('cardSelect').value=t.cardId||'';$('installmentType').value=t.installmentType||'À vista';$('installments').value=t.installments||'';$('recurring').value=t.recurring||'Não';$('frequency').value=t.frequency||'Mensal';$('endDate').value=t.endDate||'';$('note').value=t.note||'';updateTypeUI();$('payment').dispatchEvent(new Event('change'));$('installmentType').dispatchEvent(new Event('change'));$('recurring').dispatchEvent(new Event('change'));$('saveTxBtn').textContent='Salvar alterações';$('cancelEditBtn').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})}
 function cancelEdit(reset=true){editingId=null;$('saveTxBtn').textContent='Salvar lançamento';$('cancelEditBtn').classList.add('hidden');if(reset){$('txForm').reset();$('date').value=today();$('cardWrap').classList.add('hidden');$('installmentWrap').classList.add('hidden');$('recurringWrap').classList.add('hidden')}}$('cancelEditBtn').onclick=()=>cancelEdit();
 function removeTx(id){if(confirm('Excluir este lançamento?')){const old=data.tx.find(t=>t.id===id);if(affectsAccount(old))applyAccountDelta(old.accountId,-signed(old));if(old&&old.recurring==='Sim'){data.recurring=data.recurring.filter(r=>!(r.box===old.box&&r.type===old.type&&sameText(r.desc,old.desc)&&r.startDate===old.date));}data.tx=data.tx.filter(t=>t.id!==id);data.installments=data.installments.filter(p=>p.purchaseId!==id);persist()}}$('boxForm').onsubmit=e=>{e.preventDefault();const input=$('boxName');const n=input.value.trim();if(!n)return;if(data.boxes.some(b=>sameText(b,n))){alert('Esse caixa já existe.');return}data.boxes.push(n);localStorage.setItem(LAST,n);input.value='';persist();alert('Caixa adicionado com sucesso.');};function renameBox(i){
   const old=data.boxes[i];
