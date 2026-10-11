@@ -216,10 +216,10 @@
 <p class="muted">Por segurança, o PIN não é incluído nos backups. Os backups guardam somente os dados financeiros.</p>
 </div></section>
 <section id="backup" class="hidden"><div class="panel"><h2>Backup e recuperação</h2><p>Faça um backup completo dos dados deste aparelho. O arquivo é salvo em formato JSON. No iPhone, ao tocar em <b>Exportar backup</b>, você poderá escolher onde guardar o arquivo, inclusive em <b>Arquivos</b> e, se disponível no aparelho, no <b>Google Drive</b>.</p><div id="backupInfo" class="notice"></div><div class="backup-actions"><button class="backup-action export" type="button" onclick="exportData()">📤 Exportar backup</button><button class="backup-action file" type="button" onclick="$('restoreFile').click()">📂 Restaurar backup de um arquivo</button><button class="backup-action auto" type="button" onclick="restoreAutoBackup()">♻️ Restaurar última cópia automática</button><button class="backup-action update" type="button" onclick="updateAppVersion()">🔄 Atualizar versão do aplicativo</button></div><input class="backup-file-input" type="file" id="restoreFile" accept=".json,application/json"><p class="muted backup-help">Para restaurar um arquivo, toque em <b>Restaurar backup de um arquivo</b> e escolha o backup .json salvo anteriormente. Antes da restauração, o aplicativo cria automaticamente uma cópia de segurança local dos dados atuais.</p><div class="notice" style="margin-top:10px"><strong>🔄 Atualização:</strong> ao tocar em Atualizar versão, o aplicativo cria uma cópia automática dos dados deste navegador e recarrega a página tentando buscar o arquivo mais recente publicado. Para maior segurança, exporte também um backup em arquivo antes de atualizar. O botão não permite manter versões antigas instaladas; ele recarrega a versão que estiver publicada no site.</div><div class="notice" style="margin-top:10px"><strong>🔐 Migração segura:</strong> versões futuras podem migrar os dados em etapas. Antes de uma migração de estrutura, o aplicativo cria uma cópia automática dos dados atuais.</div><div class="notice" style="margin-top:10px"><strong>📱 Atenção no iPhone:</strong> o acesso pelo ícone da Tela de Início e o acesso pelo Safari usam armazenamentos separados. Para levar os mesmos dados de um para o outro, use o backup.</div></div></section>
-<footer>Versão 43 • Filtros recolhíveis e listagens compactas.</footer>
+<footer>Versão 44 • Correção no salvamento de lançamentos e contas vencidas.</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=43;const SCHEMA=9;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=44;const SCHEMA=9;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
 function normalizeData(raw){const d=raw&&typeof raw==='object'?raw:{};if(!Array.isArray(d.boxes))d.boxes=[];d.boxes=d.boxes.map(b=>String(b??'').trim()).filter(Boolean).map(b=>b==='Meu Financeiro'?'Pessoal':b);DEFAULT_BOXES.forEach(b=>{if(!d.boxes.includes(b))d.boxes.push(b)});d.boxes=[...new Set(d.boxes)];if(!Array.isArray(d.tx))d.tx=[];d.tx=d.tx.map(t=>({...t,party:String(t?.party||t?.store||t?.loja||'')}));if(!Array.isArray(d.accounts))d.accounts=[];d.accounts=d.accounts.map(a=>({...a,balance:Math.round((Number(a.balance)||0)*100)/100}));if(!Array.isArray(d.cards))d.cards=[];if(!Array.isArray(d.categories))d.categories=[];if(!Array.isArray(d.applications))d.applications=[];d.applications=d.applications.map(a=>({...a,balance:Math.round((Number(a.balance)||0)*100)/100}));if(!Array.isArray(d.installments))d.installments=[];if(!Array.isArray(d.invoices))d.invoices=[];if(!Array.isArray(d.recurring))d.recurring=[];if(!Array.isArray(d.refunds))d.refunds=[];d._schemaVersion=SCHEMA;return d}
 
@@ -535,6 +535,14 @@ function restoreDraft(){
  }catch(e){}
 }
 function persist(){try{const previous=localStorage.getItem(KEY);if(previous){try{localStorage.setItem(AUTO,JSON.stringify({app:'Meu Controle Financeiro',version:SCHEMA,reason:'cópia automática anterior à gravação',createdAt:new Date().toISOString(),data:JSON.parse(previous)}))}catch(e){}}data=normalizeData(data);localStorage.setItem(KEY,JSON.stringify(data));render()}catch(e){alert('Não foi possível salvar os dados. Seus dados anteriores foram preservados. Verifique o espaço disponível e o Backup.')}}
+function persistTransaction(){
+  data=normalizeData(data);
+  const serialized=JSON.stringify(data);
+  const previous=localStorage.getItem(KEY);
+  if(previous){try{localStorage.setItem(AUTO,JSON.stringify({app:'Meu Controle Financeiro',version:APP_VERSION,reason:'backup automático antes de salvar lançamento',createdAt:new Date().toISOString(),data:JSON.parse(previous)}))}catch(e){}}
+  localStorage.setItem(KEY,serialized);
+  try{render();return {saved:true,rendered:true}}catch(err){console.error('Lançamento salvo, mas a tela não pôde ser atualizada:',err);return {saved:true,rendered:false,error:err}}
+}
 function money(n){return Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function parseBR(v){let s=String(v??'').trim().replace(/\s/g,'').replace(/R\$/i,'');if(!s)return NaN;if(s.includes(',')){s=s.replace(/\./g,'').replace(',','.')}else{s=s.replace(/\.(?=\d{3}(?:\.|$))/g,'')}return Number(s)}
@@ -722,11 +730,14 @@ function monthNameShort(ym){const [y,m]=ym.split('-').map(Number);return new Dat
 function monthKeysFromCurrent(count=6){const out=[];const now=new Date();for(let i=0;i<count;i++){const d=new Date(now.getFullYear(),now.getMonth()+i,1);out.push(d.toISOString().slice(0,7));}return out;}
 function monthlyDashboardItems(box,ym,type){
   const monthEnd=ym+'-31';
+  const currentMonth=today().slice(0,7);
   const actual=data.tx.filter(t=>{
-    if(t.box!==box||t.status!=='Previsto'||t.type!==type||t.status==='Cancelada'||!projectionEligible(t,box))return false;
+    if(t.box!==box||t.status!=='Previsto'||t.type!==type||t.status==='Cancelada')return false;
     const inSelectedMonth=String(t.date||'').startsWith(ym);
-    const overdueExpense=type==='Despesa'&&t.date<today();
-    return inSelectedMonth||overdueExpense;
+    // Despesas vencidas permanecem visíveis na lista do mês atual, mesmo se a data de referência do saldo já passou.
+    const overdueExpense=type==='Despesa'&&ym===currentMonth&&String(t.date||'')<today();
+    if(!inSelectedMonth&&!overdueExpense)return false;
+    return overdueExpense||projectionEligible(t,box);
   });
   const projected=recurringProjectedTx(box,ym+'-01',monthEnd).filter(t=>t.type===type&&projectionEligible(t,box));
   const merged=[...actual,...projected];
@@ -889,17 +900,15 @@ if(editingId){
   let recurrenceRecord=null;
   let recurrenceChoice=null;
   if(old.recurring==='Sim'){
-    recurrenceRecord=(data.recurring||[]).find(r=>
-      r.box===old.box &&
-      r.type===old.type &&
-      r.desc===old.desc &&
-      r.startDate===old.date
-    );
-    if(recurrenceRecord){
+    recurrenceRecord=(data.recurring||[]).find(r=>r.active!==false&&r.box===old.box&&r.type===old.type&&r.desc===old.desc&&String(r.party||'')===String(partyName(old)||''))
+      ||(data.recurring||[]).find(r=>r.active!==false&&r.box===old.box&&r.type===old.type&&r.desc===old.desc);
+    if(recurrenceRecord&&rec.recurring==='Sim'){
       recurrenceChoice=confirm('Este lançamento faz parte de uma recorrência.\n\nToque em OK para alterar este lançamento e os próximos da recorrência.\nToque em Cancelar para alterar somente este lançamento.');
       recurrenceChoice=recurrenceChoice?'2':'1';
+    }else if(recurrenceRecord&&rec.recurring!=='Sim'){
+      // Se a pessoa desmarcou Recorrente, encerra a regra para não gerar novos lançamentos virtuais duplicados.
+      recurrenceRecord.active=false;
     }
-
   }
 
   if(affectsAccount(old)) applyAccountDelta(old.accountId,-signed(old));
@@ -945,7 +954,7 @@ if(editingId){
     vals.forEach((v,i)=>data.installments.push({id:'par_'+id+'_'+(i+1),purchaseId:id,cardId:rec.cardId,number:i+1,total:n,value:v,month:monthAdd(first,i),date:rec.date,status:'Previsto'}));
   }
 }
-const wasEditing=!!editingId;clearDraft();localStorage.setItem(LAST,rec.box);cancelEdit(false);persist();e.target.reset();$('date').value=today();$('type').value='Despesa';$('status').value='Realizado';updateTypeUI();$('cardWrap').classList.add('hidden');$('installmentWrap').classList.add('hidden');$('recurringWrap').classList.add('hidden');showSaveSuccess(wasEditing?'Alterações salvas com sucesso.':'Lançamento registrado com sucesso.');}catch(err){console.error('Erro ao salvar lançamento:',err);alert('Não foi possível salvar o lançamento. Nenhuma alteração foi confirmada. Detalhe: '+(err&&err.message?err.message:'erro inesperado')+'. Tente novamente.');}};
+const wasEditing=!!editingId;clearDraft();localStorage.setItem(LAST,rec.box);const saveResult=persistTransaction();cancelEdit(false);e.target.reset();$('date').value=today();$('type').value='Despesa';$('status').value='Realizado';updateTypeUI();$('cardWrap').classList.add('hidden');$('installmentWrap').classList.add('hidden');$('recurringWrap').classList.add('hidden');showSaveSuccess(wasEditing?'Alterações salvas com sucesso.':'Lançamento registrado com sucesso.');if(!saveResult.rendered){const notice=$('draftNotice');notice.textContent='✅ O lançamento foi salvo, mas a tela teve um erro ao atualizar. Recarregue a página para conferir.';notice.classList.remove('hidden');notice.style.background='#fff4df';notice.style.color='#7a4b00';}}catch(err){console.error('Erro ao salvar lançamento:',err);alert('Não foi possível salvar o lançamento. Seus dados não foram confirmados. Detalhe: '+(err&&err.message?err.message:'erro inesperado')+'. Confira os campos e tente novamente.');}};
 function editTx(id){let t=data.tx.find(x=>x.id===id);if(!t)return;editingId=id;showTab('lancamentos');$('type').value=t.type;$('desc').value=t.desc;$('party').value=partyName(t);$('value').value=Number(t.value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});$('date').value=t.date;$('box').value=t.box;$('status').value=t.status;$('category').value=t.category||'';$('payment').value=t.payment||'Pix';$('accountSelect').value=t.accountId||'';$('cardSelect').value=t.cardId||'';$('installmentType').value=t.installmentType||'À vista';$('installments').value=t.installments||'';$('recurring').value=t.recurring||'Não';$('frequency').value=t.frequency||'Mensal';$('endDate').value=t.endDate||'';$('note').value=t.note||'';updateTypeUI();$('payment').dispatchEvent(new Event('change'));$('installmentType').dispatchEvent(new Event('change'));$('recurring').dispatchEvent(new Event('change'));$('saveTxBtn').textContent='Salvar alterações';$('cancelEditBtn').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})}
 function cancelEdit(reset=true){editingId=null;$('saveTxBtn').textContent='Salvar lançamento';$('cancelEditBtn').classList.add('hidden');if(reset){$('txForm').reset();$('date').value=today();$('cardWrap').classList.add('hidden');$('installmentWrap').classList.add('hidden');$('recurringWrap').classList.add('hidden')}}$('cancelEditBtn').onclick=()=>cancelEdit();
 function removeTx(id){if(confirm('Excluir este lançamento?')){const old=data.tx.find(t=>t.id===id);if(affectsAccount(old))applyAccountDelta(old.accountId,-signed(old));if(old&&old.recurring==='Sim'){data.recurring=data.recurring.filter(r=>!(r.box===old.box&&r.type===old.type&&r.desc===old.desc&&r.startDate===old.date));}data.tx=data.tx.filter(t=>t.id!==id);data.installments=data.installments.filter(p=>p.purchaseId!==id);persist()}}$('boxForm').onsubmit=e=>{e.preventDefault();const input=$('boxName');const n=input.value.trim();if(!n)return;if(data.boxes.some(b=>String(b).toLowerCase()===n.toLowerCase())){alert('Esse caixa já existe.');return}data.boxes.push(n);localStorage.setItem(LAST,n);input.value='';persist();alert('Caixa adicionado com sucesso.');};function renameBox(i){
