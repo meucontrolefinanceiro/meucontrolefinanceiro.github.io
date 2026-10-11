@@ -104,7 +104,7 @@
 .month-tabs{display:flex;gap:6px;overflow:auto;margin:8px 0 10px;padding-bottom:2px}.month-tab{border:0;border-radius:999px;padding:8px 11px;background:#e7f2ed;color:var(--green);font-weight:800;white-space:nowrap}.month-tab.active{background:var(--green);color:#fff}.month-tab:disabled{opacity:.45}
 </style>
 
-<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 36</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
+<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 38</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
 <main>
 <nav><button class="active" data-tab="inicio">Visão geral</button><button data-tab="lancamentos">Lançamentos</button><button data-tab="cadastros">Cadastros</button><button data-tab="relatorios">Relatórios</button><button data-tab="backup">Backup</button><button data-tab="seguranca">Segurança</button></nav>
 <section id="inicio">
@@ -214,12 +214,12 @@
 <p class="muted">Por segurança, o PIN não é incluído nos backups. Os backups guardam somente os dados financeiros.</p>
 </div></section>
 <section id="backup" class="hidden"><div class="panel"><h2>Backup e recuperação</h2><p>Faça um backup completo dos dados deste aparelho. O arquivo é salvo em formato JSON. No iPhone, ao tocar em <b>Exportar backup</b>, você poderá escolher onde guardar o arquivo, inclusive em <b>Arquivos</b> e, se disponível no aparelho, no <b>Google Drive</b>.</p><div id="backupInfo" class="notice"></div><div class="backup-actions"><button class="backup-action export" type="button" onclick="exportData()">📤 Exportar backup</button><button class="backup-action file" type="button" onclick="$('restoreFile').click()">📂 Restaurar backup de um arquivo</button><button class="backup-action auto" type="button" onclick="restoreAutoBackup()">♻️ Restaurar última cópia automática</button><button class="backup-action update" type="button" onclick="updateAppVersion()">🔄 Atualizar versão do aplicativo</button></div><input class="backup-file-input" type="file" id="restoreFile" accept=".json,application/json"><p class="muted backup-help">Para restaurar um arquivo, toque em <b>Restaurar backup de um arquivo</b> e escolha o backup .json salvo anteriormente. Antes da restauração, o aplicativo cria automaticamente uma cópia de segurança local dos dados atuais.</p><div class="notice" style="margin-top:10px"><strong>🔄 Atualização:</strong> ao tocar em Atualizar versão, o aplicativo cria uma cópia automática dos dados deste navegador e recarrega a página tentando buscar o arquivo mais recente publicado. Para maior segurança, exporte também um backup em arquivo antes de atualizar. O botão não permite manter versões antigas instaladas; ele recarrega a versão que estiver publicada no site.</div><div class="notice" style="margin-top:10px"><strong>🔐 Migração segura:</strong> versões futuras podem migrar os dados em etapas. Antes de uma migração de estrutura, o aplicativo cria uma cópia automática dos dados atuais.</div><div class="notice" style="margin-top:10px"><strong>📱 Atenção no iPhone:</strong> o acesso pelo ícone da Tela de Início e o acesso pelo Safari usam armazenamentos separados. Para levar os mesmos dados de um para o outro, use o backup.</div></div></section>
-<footer>Versão 36 • Projeções calculadas a partir da data de atualização dos saldos.</footer>
+<footer>Versão 38 • Datas de atualização registradas somente quando o saldo é editado manualmente.</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=36;const SCHEMA=7;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=38;const SCHEMA=9;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
-function normalizeData(raw){const d=raw&&typeof raw==='object'?raw:{};if(!Array.isArray(d.boxes))d.boxes=[];d.boxes=d.boxes.map(b=>String(b??'').trim()).filter(Boolean).map(b=>b==='Meu Financeiro'?'Pessoal':b);DEFAULT_BOXES.forEach(b=>{if(!d.boxes.includes(b))d.boxes.push(b)});d.boxes=[...new Set(d.boxes)];if(!Array.isArray(d.tx))d.tx=[];d.tx=d.tx.map(t=>({...t,party:String(t?.party||t?.store||t?.loja||'')}));if(!Array.isArray(d.accounts))d.accounts=[];d.accounts=d.accounts.map(a=>({...a,balance:Math.round((Number(a.balance)||0)*100)/100,balanceUpdatedAt:a.balanceUpdatedAt||new Date().toISOString().slice(0,10)}));if(!Array.isArray(d.cards))d.cards=[];if(!Array.isArray(d.categories))d.categories=[];if(!Array.isArray(d.applications))d.applications=[];d.applications=d.applications.map(a=>({...a,balance:Math.round((Number(a.balance)||0)*100)/100,balanceUpdatedAt:a.balanceUpdatedAt||new Date().toISOString().slice(0,10)}));if(!Array.isArray(d.installments))d.installments=[];if(!Array.isArray(d.invoices))d.invoices=[];if(!Array.isArray(d.recurring))d.recurring=[];if(!Array.isArray(d.refunds))d.refunds=[];d._schemaVersion=SCHEMA;return d}
+function normalizeData(raw){const d=raw&&typeof raw==='object'?raw:{};if(!Array.isArray(d.boxes))d.boxes=[];d.boxes=d.boxes.map(b=>String(b??'').trim()).filter(Boolean).map(b=>b==='Meu Financeiro'?'Pessoal':b);DEFAULT_BOXES.forEach(b=>{if(!d.boxes.includes(b))d.boxes.push(b)});d.boxes=[...new Set(d.boxes)];if(!Array.isArray(d.tx))d.tx=[];d.tx=d.tx.map(t=>({...t,party:String(t?.party||t?.store||t?.loja||'')}));if(!Array.isArray(d.accounts))d.accounts=[];d.accounts=d.accounts.map(a=>({...a,balance:Math.round((Number(a.balance)||0)*100)/100}));if(!Array.isArray(d.cards))d.cards=[];if(!Array.isArray(d.categories))d.categories=[];if(!Array.isArray(d.applications))d.applications=[];d.applications=d.applications.map(a=>({...a,balance:Math.round((Number(a.balance)||0)*100)/100}));if(!Array.isArray(d.installments))d.installments=[];if(!Array.isArray(d.invoices))d.invoices=[];if(!Array.isArray(d.recurring))d.recurring=[];if(!Array.isArray(d.refunds))d.refunds=[];d._schemaVersion=SCHEMA;return d}
 
 function migrateData(raw){
   let d=cloneData(raw&&typeof raw==='object'?raw:{});
@@ -230,7 +230,8 @@ function migrateData(raw){
   if(!Array.isArray(d.installments))d.installments=[]; if(!Array.isArray(d.invoices))d.invoices=[];
   if(!Array.isArray(d.recurring))d.recurring=[]; if(!Array.isArray(d.refunds))d.refunds=[];
   if(from<5){d.tx=d.tx.map(t=>({...t,party:String(t?.party||t?.store||t?.loja||'')}));d.installments=d.installments.map(p=>({...p,status:'Previsto'}));}
-  if(from<6){const stamp=new Date().toISOString().slice(0,10);d.accounts=d.accounts.map(a=>({...a,balance:Math.round((Number(a.balance)||0)*100)/100,balanceUpdatedAt:a.balanceUpdatedAt||stamp}));}
+  if(from<6){d.accounts=d.accounts.map(a=>({...a,balance:Math.round((Number(a.balance)||0)*100)/100}));}
+  if(from<9){d.accounts=d.accounts.map(a=>{const x={...a};delete x.balanceUpdatedAt;return x});d.applications=d.applications.map(a=>{const x={...a};delete x.balanceUpdatedAt;return x});}
   d.boxes=[...new Set(d.boxes.map(b=>String(b||'').trim()).filter(Boolean).map(b=>b==='Meu Financeiro'?'Pessoal':b))];
   d._schemaVersion=SCHEMA; return d;
 }
@@ -267,8 +268,8 @@ function renderAccounts(){
   $('accountSelect').innerHTML='<option value="">Selecione a conta</option>'+list.map(a=>`<option value="${esc(a.id)}">${esc(a.name)} — ${esc(a.bank)}</option>`).join('');
   $('accountBox').innerHTML=`<option value="${esc(currentBox())}">${esc(currentBox())}</option>`;
   $('accountBox').value=currentBox();
-  $('accountBalanceUpdatedAt').textContent=editingAccountId?('Última atualização: '+mcfBRDate((data.accounts.find(a=>a.id===editingAccountId)||{}).balanceUpdatedAt||today())):'Última atualização: será registrada ao adicionar a conta';
-  $('accountsList').innerHTML=list.length?list.map(a=>`<div class="item"><div><strong>${esc(a.name)}</strong><div class="muted">${esc(a.bank)} · Saldo: ${money(a.balance)} · Atualizado em ${mcfBRDate(a.balanceUpdatedAt||today())}</div></div><div><strong>${money(a.balance)}</strong><br><button type="button" class="btn" onclick="editAccount('${esc(a.id)}')">Editar</button></div></div>`).join(''):'<p class="muted">Nenhuma conta ativa neste caixa.</p>';
+  $('accountBalanceUpdatedAt').textContent=editingAccountId?((data.accounts.find(a=>a.id===editingAccountId)||{}).balanceUpdatedAt?('Última atualização manual: '+mcfBRDate(data.accounts.find(a=>a.id===editingAccountId).balanceUpdatedAt)):'Nenhuma atualização manual registrada ainda'):'A data será registrada ao informar o saldo inicial';
+  $('accountsList').innerHTML=list.length?list.map(a=>`<div class="item"><div><strong>${esc(a.name)}</strong><div class="muted">${esc(a.bank)} · Saldo: ${money(a.balance)}${a.balanceUpdatedAt?' · Atualizado em '+mcfBRDate(a.balanceUpdatedAt):''}</div></div><div><strong>${money(a.balance)}</strong><br><button type="button" class="btn" onclick="editAccount('${esc(a.id)}')">Editar</button></div></div>`).join(''):'<p class="muted">Nenhuma conta ativa neste caixa.</p>';
   const sortedBanks=list.slice().filter(a=>Math.abs(Number(a.balance||0))>0.000001).sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
   $('bankBalances').innerHTML=sortedBanks.length?sortedBanks.map(a=>`<div class="item"><span>${esc(a.name)}</span><strong>${money(a.balance)}</strong></div>`).join(''):'<p class="muted">Nenhuma conta com saldo.</p>';
 }
@@ -282,7 +283,7 @@ function applicationTotals(b){
 }
 let editingApplicationId=null;
 function applicationItemHTML(a){
-  return `<div class="item"><div><strong>${esc(a.institution)} — ${esc(a.description)}</strong><div class="muted">${esc(a.type||'')} ${a.liquidity?'· Liquidez: '+esc(a.liquidity):''} · Atualizado em ${mcfBRDate(a.balanceUpdatedAt||today())}</div></div><div style="text-align:right"><strong>${money(a.balance)}</strong><br><button type="button" class="btn" onclick="editApplication('${esc(a.id)}')">Editar</button> <button type="button" class="btn" onclick="removeApplication('${esc(a.id)}')">Excluir</button></div></div>`;
+  return `<div class="item"><div><strong>${esc(a.institution)} — ${esc(a.description)}</strong><div class="muted">${esc(a.type||'')} ${a.liquidity?'· Liquidez: '+esc(a.liquidity):''}${a.balanceUpdatedAt?' · Atualizado em '+mcfBRDate(a.balanceUpdatedAt):''}</div></div><div style="text-align:right"><strong>${money(a.balance)}</strong><br><button type="button" class="btn" onclick="editApplication('${esc(a.id)}')">Editar</button> <button type="button" class="btn" onclick="removeApplication('${esc(a.id)}')">Excluir</button></div></div>`;
 }
 function renderApplications(){
   $('appBox').innerHTML=`<option value="${esc(currentBox())}">${esc(currentBox())}</option>`;
@@ -293,7 +294,7 @@ function renderApplications(){
   $('applicationsList').innerHTML=html;
   const sortedApps=apps.slice().filter(a=>Math.abs(Number(a.balance||0))>0.000001).sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
   $('dashboardApplicationsList').innerHTML=sortedApps.length?sortedApps.map(a=>`<div class="item"><span><strong>${esc(a.institution)} — ${esc(a.description)}</strong><div class="muted">${a.liquidity==='Imediata'?'Liquidez imediata':a.liquidity==='Parcial'?'Liquidez parcial':a.liquidity==='Sem liquidez imediata'?'Sem liquidez imediata':'Liquidez não informada'}</div></span><strong>${money(a.balance)}</strong></div>`).join(''):'<p class="muted">Nenhuma aplicação com saldo.</p>';
-  $('appBalanceUpdatedAt').textContent=editingApplicationId?('Última atualização: '+mcfBRDate((data.applications.find(a=>a.id===editingApplicationId)||{}).balanceUpdatedAt||today())):'Última atualização: será registrada ao adicionar a aplicação';
+  $('appBalanceUpdatedAt').textContent=editingApplicationId?((data.applications.find(a=>a.id===editingApplicationId)||{}).balanceUpdatedAt?('Última atualização manual: '+mcfBRDate(data.applications.find(a=>a.id===editingApplicationId).balanceUpdatedAt)):'Nenhuma atualização manual registrada ainda'):'A data será registrada ao informar o saldo inicial';
   $('appTotal').textContent=money(totals.total);
   $('appImmediate').textContent=money(totals.immediate);
   const immediateRow=$('appImmediate')?.closest('.item');
@@ -307,8 +308,8 @@ function editApplication(id){
   $('appInstitution').value=a.institution||'';
   $('appDescription').value=a.description||'';
   $('appType').value=a.type||'';
-  $('appBalance').value=Number(a.balance||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  $('appBalanceUpdatedAt').textContent='Última atualização: '+mcfBRDate(a.balanceUpdatedAt||today());
+  $('appBalance').value=Number(a.balance||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});applicationBalanceTouched=false;
+  $('appBalanceUpdatedAt').textContent=a.balanceUpdatedAt?('Última atualização manual: '+mcfBRDate(a.balanceUpdatedAt)):'Nenhuma atualização manual registrada ainda';
   $('appLiquidity').value=a.liquidity||'';
   const btn=$('applicationForm').querySelector('button[type="submit"]');
   btn.textContent='Salvar alterações';
@@ -319,7 +320,7 @@ function editApplication(id){
 }
 function cancelApplicationEdit(){
   editingApplicationId=null;
-  $('appInstitution').value='';$('appDescription').value='';$('appType').value='';$('appBalance').value='';$('appLiquidity').value='';$('appBalanceUpdatedAt').textContent='Última atualização: será registrada ao adicionar a aplicação';
+  $('appInstitution').value='';$('appDescription').value='';$('appType').value='';$('appBalance').value='';$('appLiquidity').value='';$('appBalanceUpdatedAt').textContent='A data será registrada ao informar o saldo inicial';
   $('applicationForm').querySelector('button[type="submit"]').textContent='Adicionar aplicação';
   const c=$('cancelApplicationEdit');if(c)c.remove();
 }
@@ -541,7 +542,7 @@ function currentBox(){if(!Array.isArray(data.boxes))data.boxes=[];const el=$('da
 function boxBalance(b){return Math.round(activeAccounts(b).reduce((s,a)=>s+Number(a.balance||0),0)*100)/100}
 function boxProjectionStart(b){const dates=activeAccounts(b).map(a=>a.balanceUpdatedAt).filter(Boolean).sort();return dates.length?dates[dates.length-1]:today()}
 function projectionEligible(t,b=t?.box){if(!t||!t.date)return false;let cutoff=boxProjectionStart(b);if(t.accountId){const a=data.accounts.find(x=>x.id===t.accountId);if(a&&a.balanceUpdatedAt)cutoff=a.balanceUpdatedAt;}return t.date>=cutoff}
-function boxAvailableBalance(b){const bank=boxBalance(b);const unassigned=data.tx.filter(t=>t.box===b&&t.status==='Realizado'&&!t.accountId&&t.payment!=='Cartão de crédito'&&t.payment!=='Dinheiro'&&projectionEligible(t,b)).reduce((s,t)=>s+signed(t),0);return Math.round((bank+unassigned)*100)/100}
+function boxAvailableBalance(b){return Math.round(boxBalance(b)*100)/100}
 function applyAccountDelta(accountId,delta){if(!accountId)return;const a=data.accounts.find(x=>x.id===accountId);if(a)a.balance=Math.round((Number(a.balance||0)+Number(delta||0))*100)/100}
 function affectsAccount(t){return t && t.status==='Realizado' && t.accountId && t.payment!=='Cartão de crédito' && t.payment!=='Dinheiro'}
 
@@ -941,20 +942,23 @@ function deleteBox(i){
   alert('Caixa excluído com sucesso.');
 }
 
+let accountBalanceTouched=false;let applicationBalanceTouched=false;
+$('accountBalance').addEventListener('input',()=>{accountBalanceTouched=true;});
+$('appBalance').addEventListener('input',()=>{applicationBalanceTouched=true;});
 $('accountForm').onsubmit=e=>{
 e.preventDefault();
 const box=currentBox(),bank=$('accountBank').value.trim(),name=$('accountName').value.trim(),parsedBalance=parseBR($('accountBalance').value),balance=Number.isFinite(parsedBalance)?Math.round(parsedBalance*100)/100:NaN;
 if(!box||!bank||!name||!Number.isFinite(balance)){alert('Preencha banco, nome da conta e saldo válido.');return}
 if(editingAccountId){
   const a=data.accounts.find(x=>x.id===editingAccountId);
-  if(a){const balanceChanged=Math.round(Number(a.balance||0)*100)!==Math.round(balance*100);a.box=box;a.bank=bank;a.name=name;a.balance=balance;if(balanceChanged||!a.balanceUpdatedAt)a.balanceUpdatedAt=today();}
-  editingAccountId=null;
+  if(a){a.box=box;a.bank=bank;a.name=name;a.balance=balance;if(accountBalanceTouched)a.balanceUpdatedAt=today();}
+  editingAccountId=null;accountBalanceTouched=false;
   $('accountForm').querySelector('button[type="submit"]').textContent='Adicionar conta';
   const cancel=$('cancelAccountEdit'); if(cancel) cancel.remove();
 }else{
-  data.accounts.push({id:'acc_'+Date.now(),box,bank,name,balance,balanceUpdatedAt:today(),active:true});
+  data.accounts.push({id:'acc_'+Date.now(),box,bank,name,balance,balanceUpdatedAt:today(),active:true});accountBalanceTouched=false;
 }
-$('accountBank').value='';$('accountName').value='';$('accountBalance').value='';$('accountBalanceUpdatedAt').textContent='Última atualização: será registrada ao adicionar a conta';
+$('accountBank').value='';$('accountName').value='';$('accountBalance').value='';$('accountBalanceUpdatedAt').textContent='A data será registrada ao informar o saldo inicial';
 persist();
 };
 
@@ -964,8 +968,8 @@ function editAccount(id){
   editingAccountId=id;
   $('accountBank').value=a.bank||'';
   $('accountName').value=a.name||'';
-  $('accountBalance').value=Number(a.balance||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-  $('accountBalanceUpdatedAt').textContent='Última atualização: '+mcfBRDate(a.balanceUpdatedAt||today());
+  $('accountBalance').value=Number(a.balance||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});accountBalanceTouched=false;
+  $('accountBalanceUpdatedAt').textContent=a.balanceUpdatedAt?('Última atualização manual: '+mcfBRDate(a.balanceUpdatedAt)):'Nenhuma atualização manual registrada ainda';
   $('accountBox').value=currentBox();
   const btn=$('accountForm').querySelector('button[type="submit"]');
   btn.textContent='Salvar alterações';
@@ -978,8 +982,8 @@ function editAccount(id){
   $('accountForm').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function cancelAccountEdit(){
-  editingAccountId=null;
-  $('accountBank').value='';$('accountName').value='';$('accountBalance').value='';$('accountBalanceUpdatedAt').textContent='Última atualização: será registrada ao adicionar a conta';
+  editingAccountId=null;accountBalanceTouched=false;
+  $('accountBank').value='';$('accountName').value='';$('accountBalance').value='';$('accountBalanceUpdatedAt').textContent='A data será registrada ao informar o saldo inicial';
   $('accountForm').querySelector('button[type="submit"]').textContent='Adicionar conta';
   const c=$('cancelAccountEdit'); if(c) c.remove();
 }
@@ -990,11 +994,11 @@ const box=$('appBox').value,institution=$('appInstitution').value.trim(),descrip
 if(!box||!institution||!description||!Number.isFinite(balance)||balance<0){alert('Preencha instituição, descrição e saldo válido.');return}
 if(editingApplicationId){
   const a=data.applications.find(x=>x.id===editingApplicationId);
-  if(a){const balanceChanged=Math.round(Number(a.balance||0)*100)!==Math.round(balance*100);a.box=box;a.institution=institution;a.description=description;a.type=type;a.balance=Math.round(balance*100)/100;a.liquidity=liquidity;a.active=true;if(balanceChanged||!a.balanceUpdatedAt)a.balanceUpdatedAt=today();}
-  cancelApplicationEdit();
+  if(a){a.box=box;a.institution=institution;a.description=description;a.type=type;a.balance=Math.round(balance*100)/100;a.liquidity=liquidity;a.active=true;if(applicationBalanceTouched)a.balanceUpdatedAt=today();}
+  cancelApplicationEdit();applicationBalanceTouched=false;
 }else{
-  data.applications.push({id:'app_'+Date.now(),box,institution,description,type,balance:Math.round(balance*100)/100,balanceUpdatedAt:today(),liquidity,active:true});
-  $('appInstitution').value='';$('appDescription').value='';$('appType').value='';$('appBalance').value='';$('appLiquidity').value='';$('appBalanceUpdatedAt').textContent='Última atualização: será registrada ao adicionar a aplicação';
+  data.applications.push({id:'app_'+Date.now(),box,institution,description,type,balance:Math.round(balance*100)/100,balanceUpdatedAt:today(),liquidity,active:true});applicationBalanceTouched=false;
+  $('appInstitution').value='';$('appDescription').value='';$('appType').value='';$('appBalance').value='';$('appLiquidity').value='';$('appBalanceUpdatedAt').textContent='A data será registrada ao informar o saldo inicial';
 }
 persist();
 };
