@@ -10,12 +10,13 @@
 .cat-mode-toggle{display:flex;gap:4px;background:#edf5fc;border-radius:999px;padding:3px}.cat-mode{border:0;border-radius:999px;padding:7px 10px;background:transparent;color:var(--blue);font-weight:800;font-size:12px}.cat-mode.active{background:var(--blue);color:#fff}.category-chart-wrap{min-height:170px}.category-chart{width:170px;height:170px;border-radius:50%;margin:10px auto 14px;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}.category-chart:after{content:"";position:absolute;inset:42px;border-radius:50%;background:#fff}.category-total{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:2;font-weight:900;color:var(--ink);font-size:16px}.category-total small{font-size:11px;color:var(--muted);font-weight:700}.category-legend{display:grid;gap:7px}.category-legend-row{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center}.category-dot{width:11px;height:11px;border-radius:50%}.category-empty{text-align:center;padding:12px 0}.
 </style>
 <style>
-/* Backup actions: three standardized buttons with distinct colors */
+/* Backup actions and update control */
 .backup-actions{display:grid;gap:9px;margin-top:10px}
 .backup-action{width:100%;min-height:52px;padding:14px 13px;border:0;border-radius:13px;font:inherit;font-weight:800;cursor:pointer;display:block;text-align:center}
 .backup-action.export{background:var(--green);color:#fff}
 .backup-action.file{background:var(--bluebg);color:var(--blue)}
 .backup-action.auto{background:var(--purplebg);color:var(--purple)}
+.backup-action.update{background:#e9f5ef;color:var(--green);border:2px solid #b9dfce}
 .backup-file-input{display:none}
 .backup-help{margin:9px 0 0}
 </style>
@@ -103,7 +104,7 @@
 .month-tabs{display:flex;gap:6px;overflow:auto;margin:8px 0 10px;padding-bottom:2px}.month-tab{border:0;border-radius:999px;padding:8px 11px;background:#e7f2ed;color:var(--green);font-weight:800;white-space:nowrap}.month-tab.active{background:var(--green);color:#fff}.month-tab:disabled{opacity:.45}
 </style>
 
-<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 31</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
+<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 33</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
 <main>
 <nav><button class="active" data-tab="inicio">Visão geral</button><button data-tab="lancamentos">Lançamentos</button><button data-tab="cadastros">Cadastros</button><button data-tab="relatorios">Relatórios</button><button data-tab="backup">Backup</button><button data-tab="seguranca">Segurança</button></nav>
 <section id="inicio">
@@ -133,7 +134,7 @@
 <div id="cardWrap" class="hidden"><label>Cartão de crédito</label><select id="cardSelect"><option value="">Selecione o cartão</option></select>
 <label>Compra</label><select id="installmentType"><option>À vista</option><option>Parcelada</option></select><div id="installmentWrap" class="hidden"><label>Número de parcelas</label><input id="installments" type="number" min="2" step="1" inputmode="numeric" placeholder="6"><div id="parcelPreview" class="muted"></div></div><div id="invoicePreview" class="muted"></div></div>
 <label>Recorrente?</label><select id="recurring"><option>Não</option><option>Sim</option></select>
-<div id="recurringWrap" class="hidden"><div class="row"><div><label>Frequência</label><select id="frequency"><option>Mensal</option><option>Semanal</option><option>Quinzenal</option><option>Bimestral</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select></div><div><label>Fim (opcional)</label><input id="endDate" type="date"></div></div><p class="muted">O cadastro recorrente serve para a projeção. O histórico passado não é alterado.</p></div>
+<div id="recurringWrap" class="hidden"><div class="row"><div><label>Frequência</label><select id="frequency"><option>Semanal</option><option>Quinzenal</option><option>Mensal</option><option>Bimestral</option><option>Trimestral</option><option>Semestral</option><option>Anual</option></select></div><div><label>Fim (opcional)</label><input id="endDate" type="date"></div></div><p class="muted">O cadastro recorrente serve para a projeção. O histórico passado não é alterado.</p></div>
 <label>Observação (opcional)</label><input id="note">
 <button class="btn primary" type="submit" id="saveTxBtn">Salvar lançamento</button><button class="btn hidden" type="button" id="cancelEditBtn">Cancelar edição</button><button class="btn hidden" type="button" id="clearDraftBtn">Descartar rascunho</button>
 </form></div>
@@ -210,14 +211,34 @@
 <p class="muted">Ao sair, o aplicativo fica bloqueado e o PIN será solicitado novamente para entrar. No Safari, a página não pode ser fechada automaticamente pelo aplicativo.</p>
 <p class="muted">Por segurança, o PIN não é incluído nos backups. Os backups guardam somente os dados financeiros.</p>
 </div></section>
-<section id="backup" class="hidden"><div class="panel"><h2>Backup e recuperação</h2><p>Faça um backup completo dos dados deste aparelho. O arquivo é salvo em formato JSON. No iPhone, ao tocar em <b>Exportar backup</b>, você poderá escolher onde guardar o arquivo, inclusive em <b>Arquivos</b> e, se disponível no aparelho, no <b>Google Drive</b>.</p><div id="backupInfo" class="notice"></div><div class="backup-actions"><button class="backup-action export" type="button" onclick="exportData()">📤 Exportar backup</button><button class="backup-action file" type="button" onclick="$('restoreFile').click()">📂 Restaurar backup de um arquivo</button><button class="backup-action auto" type="button" onclick="restoreAutoBackup()">♻️ Restaurar última cópia automática</button></div><input class="backup-file-input" type="file" id="restoreFile" accept=".json,application/json"><p class="muted backup-help">Para restaurar um arquivo, toque em <b>Restaurar backup de um arquivo</b> e escolha o backup .json salvo anteriormente. Antes da restauração, o aplicativo cria automaticamente uma cópia de segurança local dos dados atuais.</p><div class="notice" style="margin-top:10px"><strong>📱 Atenção no iPhone:</strong> o acesso pelo ícone da Tela de Início e o acesso pelo Safari usam armazenamentos separados. Para levar os mesmos dados de um para o outro, use o backup.</div></div></section>
-<footer>Versão 31 • Caixa selecionado no dashboard e mantido nas demais telas.</footer>
+<section id="backup" class="hidden"><div class="panel"><h2>Backup e recuperação</h2><p>Faça um backup completo dos dados deste aparelho. O arquivo é salvo em formato JSON. No iPhone, ao tocar em <b>Exportar backup</b>, você poderá escolher onde guardar o arquivo, inclusive em <b>Arquivos</b> e, se disponível no aparelho, no <b>Google Drive</b>.</p><div id="backupInfo" class="notice"></div><div class="backup-actions"><button class="backup-action export" type="button" onclick="exportData()">📤 Exportar backup</button><button class="backup-action file" type="button" onclick="$('restoreFile').click()">📂 Restaurar backup de um arquivo</button><button class="backup-action auto" type="button" onclick="restoreAutoBackup()">♻️ Restaurar última cópia automática</button><button class="backup-action update" type="button" onclick="updateAppVersion()">🔄 Atualizar versão do aplicativo</button></div><input class="backup-file-input" type="file" id="restoreFile" accept=".json,application/json"><p class="muted backup-help">Para restaurar um arquivo, toque em <b>Restaurar backup de um arquivo</b> e escolha o backup .json salvo anteriormente. Antes da restauração, o aplicativo cria automaticamente uma cópia de segurança local dos dados atuais.</p><div class="notice" style="margin-top:10px"><strong>🔄 Atualização:</strong> ao tocar em Atualizar versão, o aplicativo cria uma cópia automática dos dados deste navegador e recarrega a página tentando buscar o arquivo mais recente publicado. Para maior segurança, exporte também um backup em arquivo antes de atualizar. O botão não permite manter versões antigas instaladas; ele recarrega a versão que estiver publicada no site.</div><div class="notice" style="margin-top:10px"><strong>🔐 Migração segura:</strong> versões futuras podem migrar os dados em etapas. Antes de uma migração de estrutura, o aplicativo cria uma cópia automática dos dados atuais.</div><div class="notice" style="margin-top:10px"><strong>📱 Atenção no iPhone:</strong> o acesso pelo ícone da Tela de Início e o acesso pelo Safari usam armazenamentos separados. Para levar os mesmos dados de um para o outro, use o backup.</div></div></section>
+<footer>Versão 33 • Caixa selecionado no dashboard e mantido nas demais telas.</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const SCHEMA=4;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=33;const SCHEMA=5;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
-function normalizeData(raw){const d=raw&&typeof raw==='object'?raw:{};if(!Array.isArray(d.boxes))d.boxes=[];d.boxes=d.boxes.map(b=>String(b??'').trim()).filter(Boolean).map(b=>b==='Meu Financeiro'?'Pessoal':b);d.boxes=[...new Set(d.boxes)];if(!Array.isArray(d.tx))d.tx=[];d.tx=d.tx.map(t=>({...t,party:String(t?.party||t?.store||t?.loja||'')}));if(!Array.isArray(d.accounts))d.accounts=[];if(!Array.isArray(d.cards))d.cards=[];if(!Array.isArray(d.categories))d.categories=[];if(!Array.isArray(d.applications))d.applications=[];if(!Array.isArray(d.installments))d.installments=[];if(!Array.isArray(d.invoices))d.invoices=[];if(!Array.isArray(d.recurring))d.recurring=[];if(!Array.isArray(d.refunds))d.refunds=[];d._schemaVersion=SCHEMA;return d}
-(function loadDataSafely(){const raw=localStorage.getItem(KEY)||localStorage.getItem('mcf_data_v1');if(!raw){data=normalizeData({boxes:[]});return}try{const parsed=JSON.parse(raw);const before=cloneData(parsed);const needsMigration=Number(parsed._schemaVersion||0)<SCHEMA||!Array.isArray(parsed.boxes)||parsed.boxes.length===0;if(needsMigration){try{localStorage.setItem(AUTO,JSON.stringify({app:'Meu Controle Financeiro',version:SCHEMA,reason:'pré-migração automática',createdAt:new Date().toISOString(),data:before}))}catch(e){}}data=normalizeData(parsed);if(needsMigration){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}}}catch(e){data=normalizeData({});dataLoadWarning='Os dados salvos não puderam ser lidos. O aplicativo não substituiu o arquivo original. Verifique a área de Backup antes de continuar.'}})();
+function normalizeData(raw){const d=raw&&typeof raw==='object'?raw:{};if(!Array.isArray(d.boxes))d.boxes=[];d.boxes=d.boxes.map(b=>String(b??'').trim()).filter(Boolean).map(b=>b==='Meu Financeiro'?'Pessoal':b);DEFAULT_BOXES.forEach(b=>{if(!d.boxes.includes(b))d.boxes.push(b)});d.boxes=[...new Set(d.boxes)];if(!Array.isArray(d.tx))d.tx=[];d.tx=d.tx.map(t=>({...t,party:String(t?.party||t?.store||t?.loja||'')}));if(!Array.isArray(d.accounts))d.accounts=[];if(!Array.isArray(d.cards))d.cards=[];if(!Array.isArray(d.categories))d.categories=[];if(!Array.isArray(d.applications))d.applications=[];if(!Array.isArray(d.installments))d.installments=[];if(!Array.isArray(d.invoices))d.invoices=[];if(!Array.isArray(d.recurring))d.recurring=[];if(!Array.isArray(d.refunds))d.refunds=[];d._schemaVersion=SCHEMA;return d}
+
+function migrateData(raw){
+  let d=cloneData(raw&&typeof raw==='object'?raw:{});
+  const from=Number(d._schemaVersion||0);
+  if(!Array.isArray(d.boxes))d.boxes=[]; if(!Array.isArray(d.tx))d.tx=[];
+  if(!Array.isArray(d.accounts))d.accounts=[]; if(!Array.isArray(d.cards))d.cards=[];
+  if(!Array.isArray(d.categories))d.categories=[]; if(!Array.isArray(d.applications))d.applications=[];
+  if(!Array.isArray(d.installments))d.installments=[]; if(!Array.isArray(d.invoices))d.invoices=[];
+  if(!Array.isArray(d.recurring))d.recurring=[]; if(!Array.isArray(d.refunds))d.refunds=[];
+  if(from<5){d.tx=d.tx.map(t=>({...t,party:String(t?.party||t?.store||t?.loja||'')}));d.installments=d.installments.map(p=>({...p,status:'Previsto'}));}
+  d.boxes=[...new Set(d.boxes.map(b=>String(b||'').trim()).filter(Boolean).map(b=>b==='Meu Financeiro'?'Pessoal':b))];
+  d._schemaVersion=SCHEMA; return d;
+}
+(function loadDataSafely(){
+ const raw=localStorage.getItem(KEY)||localStorage.getItem('mcf_data_v1');
+ if(!raw){data=normalizeData({});return}
+ try{const parsed=JSON.parse(raw);const before=cloneData(parsed);const from=Number(parsed._schemaVersion||0);
+  if(from<SCHEMA){try{localStorage.setItem(AUTO,JSON.stringify({app:'Meu Controle Financeiro',version:APP_VERSION,reason:'backup antes da migração '+from+'→'+SCHEMA,createdAt:new Date().toISOString(),data:before}))}catch(e){}}
+  data=normalizeData(migrateData(parsed)); if(from<SCHEMA)try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}
+ }catch(e){data=normalizeData({});dataLoadWarning='Os dados salvos não puderam ser lidos. O aplicativo não substituiu o arquivo original. Verifique a área de Backup antes de continuar.'}
+})();
 let security={enabled:false,hash:''};let lockTimeout=Number(localStorage.getItem(LOCK)||15);let locked=false;let lastActivity=Number(localStorage.getItem('mcf_security_last_activity')||Date.now());
 try{const z=localStorage.getItem(SEC);if(z)security=JSON.parse(z)}catch(e){}
 const $=id=>document.getElementById(id);const today=()=>new Date().toISOString().slice(0,10);
@@ -225,6 +246,15 @@ const mcfBRDate=value=>{if(!value)return '';const m=String(value).match(/^(\d{4}
 const parseBRDate=value=>{const s=String(value||'').trim();const m=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);if(!m)return '';const d=Number(m[1]),mo=Number(m[2]),y=Number(m[3]);const dt=new Date(y,mo-1,d);return dt.getFullYear()===y&&dt.getMonth()===mo-1&&dt.getDate()===d?`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:''};
 const todayBR=()=>mcfBRDate(today());
 
+const defaultAccounts=[
+{id:'acc_nubank',box:'Pessoal',bank:'Nubank',name:'Nubank',balance:0,active:true},
+{id:'acc_bradesco',box:'Pessoal',bank:'Bradesco',name:'Bradesco',balance:0,active:true},
+{id:'acc_inter',box:'Pessoal',bank:'Inter',name:'Inter',balance:0,active:true},
+{id:'acc_caixa',box:'Pessoal',bank:'Caixa',name:'Caixa',balance:0,active:true},
+{id:'acc_btg',box:'Pessoal',bank:'BTG',name:'BTG',balance:0,active:true},
+{id:'acc_itau',box:'Casa',bank:'Itaú',name:'Itaú',balance:0,active:true},
+{id:'acc_sicoob',box:'Casa',bank:'Sicoob',name:'Sicoob',balance:0,active:true}
+];
 if(!Array.isArray(data.accounts))data.accounts=[]; data.accounts.forEach(a=>{if(a.box==='Meu Financeiro')a.box='Pessoal'});
 function activeAccounts(b){return data.accounts.filter(a=>a.box===b&&a.active)}
 function accountName(id){const a=data.accounts.find(x=>x.id===id);return a?a.name:''}
@@ -234,27 +264,9 @@ function renderAccounts(){
   $('accountSelect').innerHTML='<option value="">Selecione a conta</option>'+list.map(a=>`<option value="${esc(a.id)}">${esc(a.name)} — ${esc(a.bank)}</option>`).join('');
   $('accountBox').innerHTML=`<option value="${esc(currentBox())}">${esc(currentBox())}</option>`;
   $('accountBox').value=currentBox();
-  $('accountsList').innerHTML=list.length?list.map(a=>`<div class="item"><div><strong>${esc(a.name)}</strong><div class="muted">${esc(a.bank)} · Saldo: ${money(a.balance)}</div></div><div><strong>${money(a.balance)}</strong><br><button type="button" class="btn" onclick="editAccount('${esc(a.id)}')">Editar</button> <button type="button" class="btn danger" onclick="removeAccount('${esc(a.id)}')">Excluir</button></div></div>`).join(''):'<p class="muted">Nenhuma conta ativa neste caixa.</p>';
-  const sortedBanks=list.slice().sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
-  $('bankBalances').innerHTML=sortedBanks.length?sortedBanks.map(a=>`<div class="item"><span>${esc(a.name)}</span><strong>${money(a.balance)}</strong></div>`).join(''):'<p class="muted">Nenhuma conta cadastrada.</p>';
-}
-function removeAccount(id){
-  const a=data.accounts.find(x=>x.id===id); if(!a)return;
-  const linkedTx=data.tx.filter(t=>t.accountId===id||t.account===a.name).length;
-  const linkedRecurring=(data.recurring||[]).filter(r=>r.accountId===id||r.account===a.name).length;
-  if(linkedTx||linkedRecurring){alert('Não é possível excluir esta conta porque ela está vinculada a dados do aplicativo.\n\nLançamentos: '+linkedTx+'\nRecorrências: '+linkedRecurring);return}
-  if(!confirm('Excluir definitivamente a conta "'+a.name+'"?'))return;
-  data.accounts=data.accounts.filter(x=>x.id!==id); persist(); alert('Conta excluída com sucesso.');
-}
-function removeCard(id){
-  const c=data.cards.find(x=>x.id===id); if(!c)return;
-  const linkedTx=data.tx.filter(t=>t.cardId===id||t.card===c.name).length;
-  const linkedParts=(data.installments||[]).filter(p=>p.cardId===id).length;
-  const linkedInvoices=(data.invoices||[]).filter(i=>i.cardId===id).length;
-  const linkedRecurring=(data.recurring||[]).filter(r=>r.cardId===id||r.card===c.name).length;
-  if(linkedTx||linkedParts||linkedInvoices||linkedRecurring){alert('Não é possível excluir este cartão porque ele está vinculado a dados do aplicativo.\n\nLançamentos: '+linkedTx+'\nParcelas: '+linkedParts+'\nFaturas: '+linkedInvoices+'\nRecorrências: '+linkedRecurring);return}
-  if(!confirm('Excluir definitivamente o cartão "'+c.name+'"?'))return;
-  data.cards=data.cards.filter(x=>x.id!==id); persist(); alert('Cartão excluído com sucesso.');
+  $('accountsList').innerHTML=list.length?list.map(a=>`<div class="item"><div><strong>${esc(a.name)}</strong><div class="muted">${esc(a.bank)} · Saldo: ${money(a.balance)}</div></div><div><strong>${money(a.balance)}</strong><br><button type="button" class="btn" onclick="editAccount('${esc(a.id)}')">Editar</button></div></div>`).join(''):'<p class="muted">Nenhuma conta ativa neste caixa.</p>';
+  const sortedBanks=list.slice().filter(a=>Math.abs(Number(a.balance||0))>0.000001).sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
+  $('bankBalances').innerHTML=sortedBanks.length?sortedBanks.map(a=>`<div class="item"><span>${esc(a.name)}</span><strong>${money(a.balance)}</strong></div>`).join(''):'<p class="muted">Nenhuma conta com saldo.</p>';
 }
 if(!Array.isArray(data.applications))data.applications=[];
 function activeApplications(b){return data.applications.filter(a=>a.box===b&&a.active!==false)}
@@ -275,10 +287,12 @@ function renderApplications(){
   const totals=applicationTotals(currentBox());
   const html=apps.length?apps.map(applicationItemHTML).join(''):'<p class="muted">Nenhuma aplicação cadastrada neste caixa.</p>';
   $('applicationsList').innerHTML=html;
-  const sortedApps=apps.slice().sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
-  $('dashboardApplicationsList').innerHTML=sortedApps.length?sortedApps.map(a=>`<div class="item"><span><strong>${esc(a.institution)} — ${esc(a.description)}</strong><div class="muted">${a.liquidity==='Imediata'?'Liquidez imediata':a.liquidity==='Parcial'?'Liquidez parcial':a.liquidity==='Sem liquidez imediata'?'Sem liquidez imediata':'Liquidez não informada'}</div></span><strong>${money(a.balance)}</strong></div>`).join(''):'';
+  const sortedApps=apps.slice().filter(a=>Math.abs(Number(a.balance||0))>0.000001).sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
+  $('dashboardApplicationsList').innerHTML=sortedApps.length?sortedApps.map(a=>`<div class="item"><span><strong>${esc(a.institution)} — ${esc(a.description)}</strong><div class="muted">${a.liquidity==='Imediata'?'Liquidez imediata':a.liquidity==='Parcial'?'Liquidez parcial':a.liquidity==='Sem liquidez imediata'?'Sem liquidez imediata':'Liquidez não informada'}</div></span><strong>${money(a.balance)}</strong></div>`).join(''):'<p class="muted">Nenhuma aplicação com saldo.</p>';
   $('appTotal').textContent=money(totals.total);
   $('appImmediate').textContent=money(totals.immediate);
+  const immediateRow=$('appImmediate')?.closest('.item');
+  if(immediateRow)immediateRow.classList.toggle('hidden',Math.abs(totals.immediate)<=0.000001);
 }
 function editApplication(id){
   const a=data.applications.find(x=>x.id===id);
@@ -311,6 +325,12 @@ function removeApplication(id){
   if(editingApplicationId===id)cancelApplicationEdit();
   persist();
 }
+const defaultCards=[
+{id:'card_nubank',box:'Pessoal',name:'Nubank',dueDay:16,closeDay:'',active:true},
+{id:'card_santander',box:'Pessoal',name:'Santander',dueDay:12,closeDay:'',active:true},
+{id:'card_inter',box:'Pessoal',name:'Inter',dueDay:20,closeDay:'',active:true},
+{id:'card_itau',box:'Casa',name:'Itaú',dueDay:17,closeDay:'',active:true}
+];
 if(!Array.isArray(data.cards))data.cards=[]; data.cards.forEach(c=>{if(c.box==='Meu Financeiro')c.box='Pessoal'});
 
 // Fechamentos confirmados/inferidos a partir das faturas enviadas.
@@ -333,7 +353,7 @@ function renderCards(){
   $('cardSelect').innerHTML='<option value="">Selecione o cartão</option>'+cards.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}${c.dueDay?' — vence dia '+c.dueDay:''}</option>`).join('');
   $('cardBox').innerHTML=`<option value="${esc(currentBox())}">${esc(currentBox())}</option>`;
   $('cardBox').value=currentBox();
-  $('cardsList').innerHTML=cards.length?cards.map(c=>`<div class="item"><div><strong>${esc(c.name)}</strong><div class="muted">Vencimento: dia ${esc(c.dueDay||'—')} · Fechamento: ${esc(c.closeDay||'não informado')}</div></div><button type="button" class="btn danger" onclick="removeCard('${esc(c.id)}')">Excluir</button></div>`).join(''):'<p class="muted">Nenhum cartão ativo neste caixa.</p>';
+  $('cardsList').innerHTML=cards.length?cards.map(c=>`<div class="item"><div><strong>${esc(c.name)}</strong><div class="muted">Vencimento: dia ${esc(c.dueDay||'—')} · Fechamento: ${esc(c.closeDay||'não informado')}</div></div></div>`).join(''):'<p class="muted">Nenhum cartão ativo neste caixa.</p>';
 }
 if(!Array.isArray(data.installments))data.installments=[];
 if(!Array.isArray(data.invoices))data.invoices=[];
@@ -736,17 +756,17 @@ renderApplications();
 renderCards();
 renderInvoices();
 renderRecurring();
-let selected=localStorage.getItem(LAST);if(!data.boxes.includes(selected))selected=data.boxes[0];$('dashBox').innerHTML=data.boxes.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');$('dashBox').value=selected;syncSelectedBoxControls();$('historyBox').textContent=selected;
+let selected=localStorage.getItem(LAST);if(!data.boxes.includes(selected))selected=data.boxes[0]||'';$('dashBox').innerHTML=data.boxes.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');$('dashBox').value=selected;syncSelectedBoxControls();$('historyBox').textContent=selected||'Nenhum caixa';
 let bal=boxAvailableBalance(selected),app=applicationTotals(selected).total;let tx=data.tx.filter(t=>t.box===selected);let month=today().slice(0,7);let monthProjected=recurringProjectedTx(selected,month+'-01',month+'-31');let monthAll=[...tx.filter(t=>t.date?.startsWith(month)&&t.status!=='Cancelada'),...monthProjected];let rec=monthAll.filter(t=>t.type==='Receita');let exp=monthAll.filter(t=>t.type==='Despesa');let rr=rec.reduce((s,t)=>s+Number(t.value||0),0),ee=exp.reduce((s,t)=>s+Number(t.value||0),0);let proj=monthAll.filter(t=>t.status==='Previsto').reduce((s,t)=>s+signed(t),0)+bal;
 $('dashboardCards').innerHTML=`<div class="card green"><small>Saldo disponível</small><div class="amount green-amount">${money(bal)}</div><span class="pill">${esc(selected)}</span></div><div class="card blue"><small>Aplicações</small><div class="amount blue-amount">${money(app)}</div></div><div class="card purple"><small>Total financeiro</small><div class="amount purple-amount">${money(bal+app)}</div><span class="mini">Disponível + aplicações</span></div><div class="card amber"><small>Saldo ao final do mês</small><div class="amount amber-amount">${money(proj)}</div><span class="mini">projetado até o fim do mês</span></div>`;
-const monthBalance=rr-ee; const monthBalanceText=monthBalance<0?'− '+money(Math.abs(monthBalance)):money(monthBalance); $('monthSummary').innerHTML=`<div class="card green"><small>Receitas do mês</small><div class="amount">${money(rr)}</div></div><div class="card red"><small>Despesas do mês</small><div class="amount">${money(ee)}</div></div><div class="card"><small>Saldo do mês</small><div class="amount" style="color:var(--ink)">${monthBalanceText}</div></div>`;
+$('monthSummary').innerHTML=`<div class="card green"><small>Receitas do mês</small><div class="amount">${money(rr)}</div></div><div class="card red"><small>Despesas do mês</small><div class="amount">${money(ee)}</div></div><div class="card"><small>Saldo do mês</small><div class="amount">${money(rr-ee)}</div></div>`;
 const monthKeys=monthKeysFromCurrent(6);
 const buildMonthTabs=(id,active)=>$(id).innerHTML=monthKeys.map((m,i)=>`<button type="button" class="month-tab ${m===active?'active':''}" data-month="${m}">${esc(monthNameShort(m))}</button>`).join('');
 let selectedIncomeMonth=month;let selectedDueMonth=month;
 function dashboardMonthItem(t,kind){
   const isIncome=kind==='Receita';
   const action=`<br><button class="btn" onclick="${t.virtualRecurring?(isIncome?'launchProjectedReceipt':'launchProjectedPayment'):(isIncome?'launchReceipt':'launchPayment')}('${t.id}')">${isIncome?'Lançar recebimento':'Lançar pagamento'}</button>`;
-  const isRecurring=!!(t.virtualRecurring||t.recurring==='Sim'); const meta=`${mcfBRDate(t.date)}${t.payment?' · '+esc(t.payment):''}${isRecurring?' · 🔄 Recorrente':''}`;
+  const meta=`${mcfBRDate(t.date)}${t.payment?' · '+esc(t.payment):''}${(t.virtualRecurring||t.recurring==='Sim')?' · 🔄 Recorrente':''}`;
   return `<div class="item"><div><strong>${esc(t.desc)}</strong><div class="muted">${meta}</div></div><div style="text-align:right"><strong class="${isIncome?'positive':'negative'}">${money(Number(t.value||0)*(isIncome?1:-1))}</strong>${action}</div></div>`;
 }
 function renderIncomeMonth(){const items=monthlyDashboardItems(selected,selectedIncomeMonth,'Receita');$('incomeDueCount').textContent=items.length;$('incomeDueList').innerHTML=items.map(t=>dashboardMonthItem(t,'Receita')).join('')||'Nenhum recebimento previsto neste mês.';}
@@ -799,31 +819,27 @@ if(editingId){
   let recurrenceChoice=null;
   if(old.recurring==='Sim'){
     recurrenceRecord=(data.recurring||[]).find(r=>
-      (old.recurringId&&r.id===old.recurringId) ||
-      (r.box===old.box && r.type===old.type && r.desc===old.desc && (r.startDate===old.date || !r.endDate))
+      r.box===old.box &&
+      r.type===old.type &&
+      r.desc===old.desc &&
+      r.startDate===old.date
     );
     if(recurrenceRecord){
-      recurrenceChoice=prompt(
-        'Este lançamento faz parte de uma recorrência.\n\nDigite 1 para alterar somente este lançamento.\nDigite 2 para alterar este lançamento e os próximos da recorrência.',
-        '1'
-      );
-      if(recurrenceChoice===null)return;
-      recurrenceChoice=recurrenceChoice.trim();
-      if(recurrenceChoice!=='1'&&recurrenceChoice!=='2'){
-        alert('Digite 1 para alterar somente este lançamento ou 2 para alterar este lançamento e os próximos.');
-        return;
-      }
+      recurrenceChoice=confirm('Este lançamento faz parte de uma recorrência.\n\nToque em OK para alterar este lançamento e os próximos da recorrência.\nToque em Cancelar para alterar somente este lançamento.');
+      recurrenceChoice=recurrenceChoice?'2':'1';
     }
+
   }
 
   if(affectsAccount(old)) applyAccountDelta(old.accountId,-signed(old));
   data.installments=data.installments.filter(p=>p.purchaseId!==editingId);
 
   const edited=data.tx.find(t=>t.id===editingId);
+  if(!edited){alert('Não foi possível localizar o lançamento para salvar as alterações.');return}
   Object.assign(edited,rec);
 
   if(recurrenceRecord&&recurrenceChoice==='1'){
-    edited.recurring='Não'; edited.recurringId='';
+    edited.recurring='Não';
   }else if(recurrenceRecord&&recurrenceChoice==='2'){
     Object.assign(recurrenceRecord,{
       box:rec.box,
@@ -840,7 +856,7 @@ if(editingId){
       endDate:rec.endDate||'',
       active:true
     });
-    edited.recurring='Sim'; edited.recurringId=recurrenceRecord.id;
+    edited.recurring='Sim';
   }
 
   if(affectsAccount(edited)) applyAccountDelta(edited.accountId,signed(edited));
@@ -851,15 +867,14 @@ if(editingId){
 }else{
   if(rec.recurring==='Sim'){data.recurring.push({id:'rr_'+Date.now(),box:rec.box,type:rec.type,desc:rec.desc,party:rec.party||'',value:rec.value,category:rec.category,payment:rec.payment,accountId:rec.accountId||'',cardId:rec.cardId||'',frequency:rec.frequency,startDate:rec.date,endDate:rec.endDate||'',active:true});}
   const id=crypto.randomUUID?crypto.randomUUID():String(Date.now());
-  let recurringId=''; if(rec.recurring==='Sim'){recurringId='rr_'+Date.now()+'_'+Math.random().toString(36).slice(2,7); data.recurring[data.recurring.length-1].id=recurringId;}
-  data.tx.push({id,...rec,recurringId});
+  data.tx.push({id,...rec});
   if(affectsAccount(rec)) applyAccountDelta(rec.accountId,signed(rec));
   if(rec.type==='Despesa'&&rec.payment==='Cartão de crédito'&&rec.cardId){
     const card=cardById(rec.cardId), n=rec.installmentType==='Parcelada'?Math.max(2,rec.installments||2):1, vals=splitCents(rec.value,n), first=invoiceMonth(card,rec.date);
     vals.forEach((v,i)=>data.installments.push({id:'par_'+id+'_'+(i+1),purchaseId:id,cardId:rec.cardId,number:i+1,total:n,value:v,month:monthAdd(first,i),date:rec.date,status:'Previsto'}));
   }
 }
-const wasEditing=!!editingId;clearDraft();localStorage.setItem(LAST,rec.box);cancelEdit(false);persist();e.target.reset();$('date').value=today();$('type').value='Despesa';$('status').value='Realizado';updateTypeUI();$('cardWrap').classList.add('hidden');$('installmentWrap').classList.add('hidden');$('recurringWrap').classList.add('hidden');showSaveSuccess(wasEditing?'Lançamento atualizado com sucesso.':'Lançamento registrado com sucesso.');};
+const wasEditing=!!editingId;clearDraft();localStorage.setItem(LAST,rec.box);cancelEdit(false);persist();e.target.reset();$('date').value=today();$('type').value='Despesa';$('status').value='Realizado';updateTypeUI();$('cardWrap').classList.add('hidden');$('installmentWrap').classList.add('hidden');$('recurringWrap').classList.add('hidden');showSaveSuccess(wasEditing?'Alterações salvas com sucesso.':'Lançamento registrado com sucesso.');};
 function editTx(id){let t=data.tx.find(x=>x.id===id);if(!t)return;editingId=id;showTab('lancamentos');$('type').value=t.type;$('desc').value=t.desc;$('party').value=partyName(t);$('value').value=Number(t.value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});$('date').value=t.date;$('box').value=t.box;$('status').value=t.status;$('category').value=t.category||'';$('payment').value=t.payment||'Pix';$('accountSelect').value=t.accountId||'';$('cardSelect').value=t.cardId||'';$('installmentType').value=t.installmentType||'À vista';$('installments').value=t.installments||'';$('recurring').value=t.recurring||'Não';$('frequency').value=t.frequency||'Mensal';$('endDate').value=t.endDate||'';$('note').value=t.note||'';updateTypeUI();$('payment').dispatchEvent(new Event('change'));$('installmentType').dispatchEvent(new Event('change'));$('recurring').dispatchEvent(new Event('change'));$('saveTxBtn').textContent='Salvar alterações';$('cancelEditBtn').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})}
 function cancelEdit(reset=true){editingId=null;$('saveTxBtn').textContent='Salvar lançamento';$('cancelEditBtn').classList.add('hidden');if(reset){$('txForm').reset();$('date').value=today();$('cardWrap').classList.add('hidden');$('installmentWrap').classList.add('hidden');$('recurringWrap').classList.add('hidden')}}$('cancelEditBtn').onclick=()=>cancelEdit();
 function removeTx(id){if(confirm('Excluir este lançamento?')){const old=data.tx.find(t=>t.id===id);if(affectsAccount(old))applyAccountDelta(old.accountId,-signed(old));if(old&&old.recurring==='Sim'){data.recurring=data.recurring.filter(r=>!(r.box===old.box&&r.type===old.type&&r.desc===old.desc&&r.startDate===old.date));}data.tx=data.tx.filter(t=>t.id!==id);data.installments=data.installments.filter(p=>p.purchaseId!==id);persist()}}$('boxForm').onsubmit=e=>{e.preventDefault();const input=$('boxName');const n=input.value.trim();if(!n)return;if(data.boxes.some(b=>String(b).toLowerCase()===n.toLowerCase())){alert('Esse caixa já existe.');return}data.boxes.push(n);localStorage.setItem(LAST,n);input.value='';persist();alert('Caixa adicionado com sucesso.');};function renameBox(i){
@@ -887,30 +902,36 @@ function removeTx(id){if(confirm('Excluir este lançamento?')){const old=data.tx
 function deleteBox(i){
   const box=data.boxes[i];
   if(box==null)return;
-  if(data.boxes.length<=1){alert('Não é possível excluir o único caixa do aplicativo.');return}
-  if(currentBox()===box){alert('Antes de excluir este caixa, selecione outro caixa no painel Visão geral.');return}
+  if(data.boxes.length<=1){
+    alert('Não é possível excluir o único caixa do aplicativo.');
+    return;
+  }
+  if(currentBox()===box){
+    alert('Antes de excluir este caixa, selecione outro caixa no painel Visão geral.');
+    return;
+  }
   const txCount=data.tx.filter(t=>t.box===box).length;
   const accountCount=data.accounts.filter(a=>a.box===box).length;
   const cardCount=data.cards.filter(c=>c.box===box).length;
   const appCount=data.applications.filter(a=>a.box===box).length;
   const recurringCount=data.recurring.filter(r=>r.box===box).length;
   const total=txCount+accountCount+cardCount+appCount+recurringCount;
-  if(total>0){alert('Este caixa ainda possui dados cadastrados. Por segurança, ele só pode ser excluído quando estiver vazio.\n\nLançamentos: '+txCount+'\nContas: '+accountCount+'\nCartões: '+cardCount+'\nAplicações: '+appCount+'\nRecorrências: '+recurringCount);return}
+  if(total>0){
+    alert('Este caixa ainda possui dados cadastrados. Por segurança, ele só pode ser excluído quando estiver vazio.\n\nLançamentos: '+txCount+'\nContas: '+accountCount+'\nCartões: '+cardCount+'\nAplicações: '+appCount+'\nRecorrências: '+recurringCount);
+    return;
+  }
   const confirmName=prompt('Para excluir o caixa "'+box+'", digite exatamente o nome dele:');
   if(confirmName===null)return;
-  if(confirmName.trim()!==box){alert('O nome digitado não corresponde. O caixa não foi excluído.');return}
+  if(confirmName.trim()!==box){
+    alert('O nome digitado não corresponde. O caixa não foi excluído.');
+    return;
+  }
   if(!confirm('Excluir definitivamente o caixa "'+box+'"?'))return;
   data.boxes.splice(i,1);
-  const next=data.boxes[0];
-  localStorage.setItem(LAST,next);
-  try{
-    data=normalizeData(data);
-    localStorage.setItem(KEY,JSON.stringify(data));
-    render();
-    alert('Caixa excluído com sucesso.');
-  }catch(e){alert('Não foi possível concluir a exclusão do caixa.');}
+  if(localStorage.getItem(LAST)===box)localStorage.setItem(LAST,data.boxes[0]);
+  persist();
+  alert('Caixa excluído com sucesso.');
 }
-
 
 $('accountForm').onsubmit=e=>{
 e.preventDefault();
@@ -1133,6 +1154,19 @@ async function exportData(){
  alert('Backup realizado com sucesso.');
 }
 function createLocalSnapshot(){try{localStorage.setItem('mcf_snapshot',JSON.stringify(backupPayload()));localStorage.setItem('mcf_last_backup',JSON.stringify({at:new Date().toISOString(),type:'local'}));renderBackupInfo();alert('Cópia local criada neste navegador. Ela é útil como proteção rápida, mas não substitui o arquivo guardado fora do aparelho.')}catch(e){alert('Não foi possível criar a cópia local.')}}
+function updateAppVersion(){
+ try{
+  const payload=backupPayload();
+  const stamp=new Date().toISOString();
+  localStorage.setItem('mcf_snapshot',JSON.stringify({app:'Meu Controle Financeiro',version:SCHEMA,reason:'backup automático antes de atualizar/recarregar',createdAt:stamp,data:payload.data}));
+  localStorage.setItem(AUTO,JSON.stringify({app:'Meu Controle Financeiro',version:SCHEMA,reason:'backup automático antes de atualizar/recarregar',createdAt:stamp,data:payload.data}));
+  localStorage.setItem('mcf_last_backup',JSON.stringify({at:stamp,type:'local'}));
+  renderBackupInfo();
+  if(!confirm('Foi criada uma cópia automática local dos dados deste navegador. Deseja recarregar o aplicativo e tentar carregar a versão mais recente publicada? Para maior segurança, mantenha também um backup exportado em arquivo.'))return;
+  const target=window.location.pathname+'?atualizar='+Date.now();
+  window.location.replace(target);
+ }catch(e){alert('Não foi possível criar a cópia automática. A atualização foi cancelada para proteger seus dados.')}
+}
 function renderBackupInfo(){let el=$('backupInfo');if(!el)return;let raw=localStorage.getItem('mcf_last_backup');let snap=localStorage.getItem('mcf_snapshot');let auto=localStorage.getItem(AUTO);if(!raw&&!snap&&!auto){el.innerHTML='⚠️ <b>Nenhum backup registrado ainda.</b>';return}let info=raw?JSON.parse(raw):null;let d=info?new Date(info.at):null;let a=auto?JSON.parse(auto):null;let ad=a?new Date(a.createdAt):null;el.innerHTML=(info?`✅ Último backup: <b>${d.toLocaleString('pt-BR')}</b> (${info.type==='arquivo'?'arquivo exportado':'cópia local'})`:'')+(snap?' <span class="muted">• Cópia local disponível</span>':'')+(a?` <span class="muted">• Cópia automática: ${ad.toLocaleString('pt-BR')}</span>`:'')}
 function restoreAutoBackup(){try{const raw=localStorage.getItem(AUTO);if(!raw){alert('Não há uma cópia automática disponível.');return}const j=JSON.parse(raw);if(!j.data||!Array.isArray(j.data.boxes))throw Error('invalid');if(!confirm('Restaurar a última cópia automática? Antes disso, será criada uma nova cópia dos dados atuais.'))return;localStorage.setItem('mcf_snapshot',JSON.stringify(backupPayload()));data=normalizeData(j.data);localStorage.setItem(KEY,JSON.stringify(data));render();renderBackupInfo();alert('Cópia automática restaurada com sucesso.')}catch(e){alert('Não foi possível restaurar a cópia automática.')}}
 function validateBackup(j){if(!j||j.app!=='Meu Controle Financeiro'||!j.data||!Array.isArray(j.data.boxes)||!Array.isArray(j.data.tx))return false;return true}
