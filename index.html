@@ -106,7 +106,7 @@
 .month-tabs{display:flex;gap:6px;overflow:auto;margin:8px 0 10px;padding-bottom:2px}.month-tab{border:0;border-radius:999px;padding:8px 11px;background:#e7f2ed;color:var(--green);font-weight:800;white-space:nowrap}.month-tab.active{background:var(--green);color:#fff}.month-tab:disabled{opacity:.45}
 </style>
 
-<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 45</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
+<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 46</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
 <main>
 <nav><button class="active" data-tab="inicio">Visão geral</button><button data-tab="lancamentos">Lançamentos</button><button data-tab="cadastros">Cadastros</button><button data-tab="relatorios">Relatórios</button><button data-tab="backup">Backup</button><button data-tab="seguranca">Segurança</button></nav>
 <section id="inicio">
@@ -216,11 +216,15 @@
 <p class="muted">Por segurança, o PIN não é incluído nos backups. Os backups guardam somente os dados financeiros.</p>
 </div></section>
 <section id="backup" class="hidden"><div class="panel"><h2>Backup e recuperação</h2><p>Faça um backup completo dos dados deste aparelho. O arquivo é salvo em formato JSON. No iPhone, ao tocar em <b>Exportar backup</b>, você poderá escolher onde guardar o arquivo, inclusive em <b>Arquivos</b> e, se disponível no aparelho, no <b>Google Drive</b>.</p><div id="backupInfo" class="notice"></div><div class="backup-actions"><button class="backup-action export" type="button" onclick="exportData()">📤 Exportar backup</button><button class="backup-action file" type="button" onclick="$('restoreFile').click()">📂 Restaurar backup de um arquivo</button><button class="backup-action auto" type="button" onclick="restoreAutoBackup()">♻️ Restaurar última cópia automática</button><button class="backup-action update" type="button" onclick="updateAppVersion()">🔄 Atualizar versão do aplicativo</button></div><input class="backup-file-input" type="file" id="restoreFile" accept=".json,application/json"><p class="muted backup-help">Para restaurar um arquivo, toque em <b>Restaurar backup de um arquivo</b> e escolha o backup .json salvo anteriormente. Antes da restauração, o aplicativo cria automaticamente uma cópia de segurança local dos dados atuais.</p><div class="notice" style="margin-top:10px"><strong>🔄 Atualização:</strong> ao tocar em Atualizar versão, o aplicativo cria uma cópia automática dos dados deste navegador e recarrega a página tentando buscar o arquivo mais recente publicado. Para maior segurança, exporte também um backup em arquivo antes de atualizar. O botão não permite manter versões antigas instaladas; ele recarrega a versão que estiver publicada no site.</div><div class="notice" style="margin-top:10px"><strong>🔐 Migração segura:</strong> versões futuras podem migrar os dados em etapas. Antes de uma migração de estrutura, o aplicativo cria uma cópia automática dos dados atuais.</div><div class="notice" style="margin-top:10px"><strong>📱 Atenção no iPhone:</strong> o acesso pelo ícone da Tela de Início e o acesso pelo Safari usam armazenamentos separados. Para levar os mesmos dados de um para o outro, use o backup.</div></div></section>
-<footer>Versão 45 • Correções no salvamento de lançamentos e contas vencidas.</footer>
+<footer>Versão 46 • Comparação de nomes sem diferença por acentos.</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=45;const SCHEMA=9;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=46;const SCHEMA=9;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
+// Compara nomes ignorando acentos, maiúsculas/minúsculas e espaços repetidos, sem alterar o texto salvo.
+function compareKey(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/\s+/g,' ').trim()}
+function sameText(a,b){return compareKey(a)===compareKey(b)}
+function uniqueTextValues(values){const seen=new Set();return values.filter(v=>String(v??'').trim()).map(v=>String(v)).filter(v=>{const k=compareKey(v);if(seen.has(k))return false;seen.add(k);return true})}
 function normalizeData(raw){const d=raw&&typeof raw==='object'?raw:{};if(!Array.isArray(d.boxes))d.boxes=[];d.boxes=d.boxes.map(b=>String(b??'').trim()).filter(Boolean).map(b=>b==='Meu Financeiro'?'Pessoal':b);DEFAULT_BOXES.forEach(b=>{if(!d.boxes.includes(b))d.boxes.push(b)});d.boxes=[...new Set(d.boxes)];if(!Array.isArray(d.tx))d.tx=[];d.tx=d.tx.map(t=>({...t,party:String(t?.party||t?.store||t?.loja||'')}));if(!Array.isArray(d.accounts))d.accounts=[];d.accounts=d.accounts.map(a=>({...a,balance:Math.round((Number(a.balance)||0)*100)/100}));if(!Array.isArray(d.cards))d.cards=[];if(!Array.isArray(d.categories))d.categories=[];if(!Array.isArray(d.applications))d.applications=[];d.applications=d.applications.map(a=>({...a,balance:Math.round((Number(a.balance)||0)*100)/100}));if(!Array.isArray(d.installments))d.installments=[];if(!Array.isArray(d.invoices))d.invoices=[];if(!Array.isArray(d.recurring))d.recurring=[];if(!Array.isArray(d.refunds))d.refunds=[];d._schemaVersion=SCHEMA;return d}
 
 function migrateData(raw){
@@ -627,7 +631,7 @@ if(!Array.isArray(data.categories)||!data.categories.length){
   data.categories=data.categories.map(c=>{
     const name=String(typeof c==='string'?c:(c&&c.name)||'').trim();
     const explicitType=c&&typeof c==='object'&&(c.type==='Receita'||c.type==='Despesa')?c.type:null;
-    const inferred=incomeCategories.some(x=>x.toLowerCase()===name.toLowerCase())?'Receita':'Despesa';
+    const inferred=incomeCategories.some(x=>sameText(x,name))?'Receita':'Despesa';
     return {name,type:explicitType||inferred};
   }).filter(c=>c.name);
   const existing=new Set(data.categories.map(c=>c.name.toLowerCase()));
@@ -636,8 +640,8 @@ if(!Array.isArray(data.categories)||!data.categories.length){
 }
 // Remove a categoria de receita que foi descontinuada.
 if(Array.isArray(data.categories)){
-  data.categories=data.categories.filter(c=>String(c?.name||c||'').trim().toLowerCase()!=='serviços realizados');
-  if(!data.categories.some(c=>String(c?.name||'').toLowerCase()==='freelance e serviços')) data.categories.push({name:'Freelance e serviços',type:'Receita'});
+  data.categories=data.categories.filter(c=>!sameText(String(c?.name||c||'').trim(),'serviços realizados'));
+  if(!data.categories.some(c=>sameText(String(c?.name||''),'freelance e serviços'))) data.categories.push({name:'Freelance e serviços',type:'Receita'});
 }
 if(!Array.isArray(data.recurring))data.recurring=[];
 if(!Array.isArray(data.refunds))data.refunds=[];
@@ -744,8 +748,8 @@ function monthlyDashboardItems(box,ym,type){
   return merged.sort((a,b)=>a.date.localeCompare(b.date));
 }
 function partyName(t){return String(t?.party||t?.store||t?.loja||'').trim()}
-function reportOptions(){const b=$('reportBox').value||currentBox();const tx=data.tx.filter(t=>t.box===b);const fill=(id,values)=>{const el=$(id),old=el.value;el.innerHTML='<option>Todos</option>'+[...new Set(values.filter(Boolean).map(String))].sort((a,b)=>a.localeCompare(b,'pt-BR')).map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if([...el.options].some(o=>o.value===old))el.value=old};fill('reportCategory',tx.map(t=>t.category));fill('reportAccount',tx.map(t=>accountName(t.accountId)||t.account));fill('reportCard',tx.map(t=>(cardById(t.cardId)||{}).name||t.card));fill('reportStore',tx.map(partyName));}
-function filteredReportTx(){const b=$('reportBox').value||currentBox(),start=$('reportStart').value,end=$('reportEnd').value,type=$('reportType').value,status=$('reportStatus').value,cat=$('reportCategory').value,acc=$('reportAccount').value,card=$('reportCard').value,store=$('reportStore').value,pay=$('reportPayment').value;return data.tx.filter(t=>t.box===b).filter(t=>!start||t.date>=start).filter(t=>!end||t.date<=end).filter(t=>type==='Todos'||t.type===type).filter(t=>status==='Todos'||t.status===status).filter(t=>cat==='Todos'||(t.category||'')===cat).filter(t=>acc==='Todos'||(accountName(t.accountId)||t.account||'')===acc).filter(t=>card==='Todos'||((cardById(t.cardId)||{}).name||t.card||'')===card).filter(t=>store==='Todos'||partyName(t)===store).filter(t=>pay==='Todos'||(t.payment||'')===pay);}
+function reportOptions(){const b=$('reportBox').value||currentBox();const tx=data.tx.filter(t=>t.box===b);const fill=(id,values)=>{const el=$(id),old=el.value;el.innerHTML='<option value="Todos">Todos</option>'+uniqueTextValues(values).sort((a,b)=>a.localeCompare(b,'pt-BR')).map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if([...el.options].some(o=>sameText(o.value,old)))el.value=[...el.options].find(o=>sameText(o.value,old))?.value||'Todos'};fill('reportCategory',tx.map(t=>t.category));fill('reportAccount',tx.map(t=>accountName(t.accountId)||t.account));fill('reportCard',tx.map(t=>(cardById(t.cardId)||{}).name||t.card));fill('reportStore',tx.map(partyName));}
+function filteredReportTx(){const b=$('reportBox').value||currentBox(),start=$('reportStart').value,end=$('reportEnd').value,type=$('reportType').value,status=$('reportStatus').value,cat=$('reportCategory').value,acc=$('reportAccount').value,card=$('reportCard').value,store=$('reportStore').value,pay=$('reportPayment').value;return data.tx.filter(t=>t.box===b).filter(t=>!start||t.date>=start).filter(t=>!end||t.date<=end).filter(t=>type==='Todos'||t.type===type).filter(t=>status==='Todos'||t.status===status).filter(t=>cat==='Todos'||sameText(t.category||'',cat)).filter(t=>acc==='Todos'||sameText(accountName(t.accountId)||t.account||'',acc)).filter(t=>card==='Todos'||sameText((cardById(t.cardId)||{}).name||t.card||'',card)).filter(t=>store==='Todos'||sameText(partyName(t),store)).filter(t=>pay==='Todos'||(t.payment||'')===pay);}
 function reportBoxValue(){const el=$('reportBox');return el&&el.value?el.value:currentBox()}
 function renderReports(){
  reportOptions();
@@ -850,12 +854,12 @@ $('boxesList').innerHTML=data.boxes.map((b,i)=>`<div class="item"><span><strong>
 }
 function historyOptions(){
  const box=currentBox(),tx=data.tx.filter(t=>t.box===box);
- const fill=(id,values,allLabel)=>{const el=$(id);if(!el)return;const old=el.value||'Todos';el.innerHTML=`<option value="Todos">${allLabel}</option>`+[...new Set(values.filter(Boolean).map(String))].sort((a,b)=>a.localeCompare(b,'pt-BR')).map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if([...el.options].some(o=>o.value===old))el.value=old;};
+ const fill=(id,values,allLabel)=>{const el=$(id);if(!el)return;const old=el.value||'Todos';el.innerHTML=`<option value="Todos">${allLabel}</option>`+uniqueTextValues(values).sort((a,b)=>a.localeCompare(b,'pt-BR')).map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if([...el.options].some(o=>sameText(o.value,old)))el.value=[...el.options].find(o=>sameText(o.value,old))?.value||'Todos';};
  fill('historyCategory',tx.map(t=>t.category),'Todas as categorias');fill('historyParty',tx.map(partyName),'Todas');
 }
 function renderHistory(){
  historyOptions();const box=currentBox(),start=$('historyStart')?.value||'',end=$('historyEnd')?.value||'',type=$('historyType')?.value||'Todos',recurring=$('historyRecurring')?.value||'Todos',cat=$('historyCategory')?.value||'Todos',party=$('historyParty')?.value||'Todos';
- const rows=data.tx.filter(t=>t.box===box).filter(t=>!start||String(t.date||'')>=start).filter(t=>!end||String(t.date||'')<=end).filter(t=>type==='Todos'||t.type===type).filter(t=>recurring==='Todos'||(recurring==='Sim'?(t.recurring==='Sim'||!!t.virtualRecurring):t.recurring!=='Sim'&&!t.virtualRecurring)).filter(t=>cat==='Todos'||(t.category||'')===cat).filter(t=>party==='Todos'||partyName(t)===party).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+ const rows=data.tx.filter(t=>t.box===box).filter(t=>!start||String(t.date||'')>=start).filter(t=>!end||String(t.date||'')<=end).filter(t=>type==='Todos'||t.type===type).filter(t=>recurring==='Todos'||(recurring==='Sim'?(t.recurring==='Sim'||!!t.virtualRecurring):t.recurring!=='Sim'&&!t.virtualRecurring)).filter(t=>cat==='Todos'||sameText(t.category||'',cat)).filter(t=>party==='Todos'||sameText(partyName(t),party)).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
  $('historyCount').textContent=`${rows.length} lançamento${rows.length===1?'':'s'} encontrado${rows.length===1?'':'s'}`;$('history').innerHTML=rows.map(txHTML).join('')||'<p class="muted">Nenhum lançamento encontrado com esses filtros.</p>';
 }
 function clearHistoryFilters(){['historyStart','historyEnd'].forEach(id=>$(id).value='');['historyType','historyRecurring','historyCategory','historyParty'].forEach(id=>$(id).value='Todos');historyOptions();renderHistory();}
@@ -892,7 +896,7 @@ function showSaveSuccess(message){
   window.scrollTo({top:0,behavior:'smooth'});
   setTimeout(()=>{if(el){el.classList.add('hidden');el.style.background='';el.style.color='';el.style.border='';}},3500);
 }
-$('txForm').onsubmit=e=>{e.preventDefault();try{let v=parseBR($('value').value);if(!Number.isFinite(v)||v<=0){alert('Digite um valor válido, por exemplo 230 ou 230,30.');return}let income=$('type').value==='Receita';let rec;try{rec={type:$('type').value,desc:$('desc').value.trim(),party:$('party').value.trim(),value:v,date:$('date').value,box:$('box').value,status:$('status').value,category:(function(){const q=$('category').value.trim();if(!q)return '';const n=q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');const syn={'tv':'Assinaturas e streaming','streaming':'Assinaturas e streaming','netflix':'Assinaturas e streaming','mercado':'Supermercado','gasolina':'Combustível','farmacia':'Farmácia','restaurante':'Restaurantes e refeições','internet':'Telefone e internet'};const wanted=syn[n]||q;const a=Array.isArray(data.categories)?data.categories:[];const hit=a.find(c=>String(c?.name||c).toLowerCase()===wanted.toLowerCase()&&c?.type===($('type').value));if(q&&!hit){throw new Error('CATEGORY_TYPE_MISMATCH')}return hit?hit.name:''})(),payment:income?'':$('payment').value,accountId:$('accountSelect').value||'',cardId:income?'':$('cardSelect').value||'',installmentType:income?'À vista':$('installmentType').value,installments:income?1:parseInt($('installments').value||1),recurring:$('recurring').value,frequency:$('frequency').value,endDate:$('endDate').value,note:$('note').value.trim()};}catch(err){if(err&&err.message==='CATEGORY_TYPE_MISMATCH'){alert('Selecione uma categoria compatível com o tipo do lançamento.');return}throw err}
+$('txForm').onsubmit=e=>{e.preventDefault();try{let v=parseBR($('value').value);if(!Number.isFinite(v)||v<=0){alert('Digite um valor válido, por exemplo 230 ou 230,30.');return}let income=$('type').value==='Receita';let rec;try{rec={type:$('type').value,desc:$('desc').value.trim(),party:$('party').value.trim(),value:v,date:$('date').value,box:$('box').value,status:$('status').value,category:(function(){const q=$('category').value.trim();if(!q)return '';const n=q.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');const syn={'tv':'Assinaturas e streaming','streaming':'Assinaturas e streaming','netflix':'Assinaturas e streaming','mercado':'Supermercado','gasolina':'Combustível','farmacia':'Farmácia','restaurante':'Restaurantes e refeições','internet':'Telefone e internet'};const wanted=syn[n]||q;const a=Array.isArray(data.categories)?data.categories:[];const hit=a.find(c=>sameText(c?.name||c,wanted)&&c?.type===($('type').value));if(q&&!hit){throw new Error('CATEGORY_TYPE_MISMATCH')}return hit?hit.name:''})(),payment:income?'':$('payment').value,accountId:$('accountSelect').value||'',cardId:income?'':$('cardSelect').value||'',installmentType:income?'À vista':$('installmentType').value,installments:income?1:parseInt($('installments').value||1),recurring:$('recurring').value,frequency:$('frequency').value,endDate:$('endDate').value,note:$('note').value.trim()};}catch(err){if(err&&err.message==='CATEGORY_TYPE_MISMATCH'){alert('Selecione uma categoria compatível com o tipo do lançamento.');return}throw err}
 if(editingId){
   const old=data.tx.find(t=>t.id===editingId);
   if(!old){alert('Não foi possível localizar o lançamento para edição.');return}
@@ -900,8 +904,8 @@ if(editingId){
   let recurrenceRecord=null;
   let recurrenceChoice=null;
   if(old.recurring==='Sim'){
-    recurrenceRecord=(data.recurring||[]).find(r=>r.active!==false&&r.box===old.box&&r.type===old.type&&r.desc===old.desc&&String(r.party||'')===String(partyName(old)||''))
-      ||(data.recurring||[]).find(r=>r.active!==false&&r.box===old.box&&r.type===old.type&&r.desc===old.desc);
+    recurrenceRecord=(data.recurring||[]).find(r=>r.active!==false&&r.box===old.box&&r.type===old.type&&sameText(r.desc,old.desc)&&sameText(r.party||'',partyName(old)||''))
+      ||(data.recurring||[]).find(r=>r.active!==false&&r.box===old.box&&r.type===old.type&&sameText(r.desc,old.desc));
     if(recurrenceRecord&&rec.recurring==='Sim'){
       recurrenceChoice=confirm('Este lançamento faz parte de uma recorrência.\n\nToque em OK para alterar este lançamento e os próximos da recorrência.\nToque em Cancelar para alterar somente este lançamento.');
       recurrenceChoice=recurrenceChoice?'2':'1';
@@ -957,14 +961,14 @@ if(editingId){
 const wasEditing=!!editingId;clearDraft();localStorage.setItem(LAST,rec.box);const saveResult=persistTransaction();cancelEdit(false);e.target.reset();$('date').value=today();$('type').value='Despesa';$('status').value='Realizado';updateTypeUI();$('cardWrap').classList.add('hidden');$('installmentWrap').classList.add('hidden');$('recurringWrap').classList.add('hidden');showSaveSuccess(wasEditing?'Alterações salvas com sucesso.':'Lançamento registrado com sucesso.');if(!saveResult.rendered){const notice=$('draftNotice');notice.textContent='✅ O lançamento foi salvo, mas a tela teve um erro ao atualizar. Recarregue a página para conferir.';notice.classList.remove('hidden');notice.style.background='#fff4df';notice.style.color='#7a4b00';}}catch(err){console.error('Erro ao salvar lançamento:',err);alert('Não foi possível salvar o lançamento. Seus dados não foram confirmados. Detalhe: '+(err&&err.message?err.message:'erro inesperado')+'. Confira os campos e tente novamente.');}};
 function editTx(id){let t=data.tx.find(x=>x.id===id);if(!t)return;editingId=id;showTab('lancamentos');$('type').value=t.type;$('desc').value=t.desc;$('party').value=partyName(t);$('value').value=Number(t.value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});$('date').value=t.date;$('box').value=t.box;$('status').value=t.status;$('category').value=t.category||'';$('payment').value=t.payment||'Pix';$('accountSelect').value=t.accountId||'';$('cardSelect').value=t.cardId||'';$('installmentType').value=t.installmentType||'À vista';$('installments').value=t.installments||'';$('recurring').value=t.recurring||'Não';$('frequency').value=t.frequency||'Mensal';$('endDate').value=t.endDate||'';$('note').value=t.note||'';updateTypeUI();$('payment').dispatchEvent(new Event('change'));$('installmentType').dispatchEvent(new Event('change'));$('recurring').dispatchEvent(new Event('change'));$('saveTxBtn').textContent='Salvar alterações';$('cancelEditBtn').classList.remove('hidden');window.scrollTo({top:0,behavior:'smooth'})}
 function cancelEdit(reset=true){editingId=null;$('saveTxBtn').textContent='Salvar lançamento';$('cancelEditBtn').classList.add('hidden');if(reset){$('txForm').reset();$('date').value=today();$('cardWrap').classList.add('hidden');$('installmentWrap').classList.add('hidden');$('recurringWrap').classList.add('hidden')}}$('cancelEditBtn').onclick=()=>cancelEdit();
-function removeTx(id){if(confirm('Excluir este lançamento?')){const old=data.tx.find(t=>t.id===id);if(affectsAccount(old))applyAccountDelta(old.accountId,-signed(old));if(old&&old.recurring==='Sim'){data.recurring=data.recurring.filter(r=>!(r.box===old.box&&r.type===old.type&&r.desc===old.desc&&r.startDate===old.date));}data.tx=data.tx.filter(t=>t.id!==id);data.installments=data.installments.filter(p=>p.purchaseId!==id);persist()}}$('boxForm').onsubmit=e=>{e.preventDefault();const input=$('boxName');const n=input.value.trim();if(!n)return;if(data.boxes.some(b=>String(b).toLowerCase()===n.toLowerCase())){alert('Esse caixa já existe.');return}data.boxes.push(n);localStorage.setItem(LAST,n);input.value='';persist();alert('Caixa adicionado com sucesso.');};function renameBox(i){
+function removeTx(id){if(confirm('Excluir este lançamento?')){const old=data.tx.find(t=>t.id===id);if(affectsAccount(old))applyAccountDelta(old.accountId,-signed(old));if(old&&old.recurring==='Sim'){data.recurring=data.recurring.filter(r=>!(r.box===old.box&&r.type===old.type&&sameText(r.desc,old.desc)&&r.startDate===old.date));}data.tx=data.tx.filter(t=>t.id!==id);data.installments=data.installments.filter(p=>p.purchaseId!==id);persist()}}$('boxForm').onsubmit=e=>{e.preventDefault();const input=$('boxName');const n=input.value.trim();if(!n)return;if(data.boxes.some(b=>sameText(b,n))){alert('Esse caixa já existe.');return}data.boxes.push(n);localStorage.setItem(LAST,n);input.value='';persist();alert('Caixa adicionado com sucesso.');};function renameBox(i){
   const old=data.boxes[i];
   if(old==null)return;
   const n=prompt('Novo nome do caixa:',old);
   if(n===null)return;
   const name=n.trim();
   if(!name)return;
-  if(data.boxes.some((b,j)=>j!==i&&String(b).toLowerCase()===name.toLowerCase())){
+  if(data.boxes.some((b,j)=>j!==i&&sameText(b,name))){
     alert('Esse caixa já existe.');
     return;
   }
@@ -1305,7 +1309,7 @@ function render(){
       const typeInput=prompt('Tipo da categoria: digite Receita ou Despesa.',oldType); if(typeInput===null)return;
       const type=/^receita$/i.test(typeInput.trim())?'Receita':/^despesa$/i.test(typeInput.trim())?'Despesa':'';
       if(!type)return alert('Digite exatamente Receita ou Despesa.');
-      if(a.some((c,j)=>j!==i&&catName(c).toLowerCase()===name.toLowerCase()))return alert('Essa categoria já existe.');
+      if(a.some((c,j)=>j!==i&&sameText(catName(c),name)))return alert('Essa categoria já existe.');
       const d=getStore(); d.categories[i]={name,type}; saveStore(d); window.dispatchEvent(new Event('mcfCategoriesChanged'));
     });
   }
@@ -1315,7 +1319,7 @@ function render(){
     const type=/^receita$/i.test(typeInput.trim())?'Receita':/^despesa$/i.test(typeInput.trim())?'Despesa':'';
     if(!type)return alert('Digite exatamente Receita ou Despesa.');
     const d=getStore(); if(!Array.isArray(d.categories))d.categories=[];
-    if(d.categories.some(c=>catName(c).toLowerCase()===name.toLowerCase()))return alert('Essa categoria já existe.');
+    if(d.categories.some(c=>sameText(catName(c),name)))return alert('Essa categoria já existe.');
     d.categories.push({name,type}); saveStore(d); window.dispatchEvent(new Event('mcfCategoriesChanged'));
   }
   document.addEventListener('click',e=>{if(e.target.id==='mcfAddCategory')add()});
