@@ -219,7 +219,7 @@
 <footer>Versão 44 • Correção no salvamento de lançamentos e contas vencidas.</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=44;const SCHEMA=9;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=45;const SCHEMA=9;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
 function normalizeData(raw){const d=raw&&typeof raw==='object'?raw:{};if(!Array.isArray(d.boxes))d.boxes=[];d.boxes=d.boxes.map(b=>String(b??'').trim()).filter(Boolean).map(b=>b==='Meu Financeiro'?'Pessoal':b);DEFAULT_BOXES.forEach(b=>{if(!d.boxes.includes(b))d.boxes.push(b)});d.boxes=[...new Set(d.boxes)];if(!Array.isArray(d.tx))d.tx=[];d.tx=d.tx.map(t=>({...t,party:String(t?.party||t?.store||t?.loja||'')}));if(!Array.isArray(d.accounts))d.accounts=[];d.accounts=d.accounts.map(a=>({...a,balance:Math.round((Number(a.balance)||0)*100)/100}));if(!Array.isArray(d.cards))d.cards=[];if(!Array.isArray(d.categories))d.categories=[];if(!Array.isArray(d.applications))d.applications=[];d.applications=d.applications.map(a=>({...a,balance:Math.round((Number(a.balance)||0)*100)/100}));if(!Array.isArray(d.installments))d.installments=[];if(!Array.isArray(d.invoices))d.invoices=[];if(!Array.isArray(d.recurring))d.recurring=[];if(!Array.isArray(d.refunds))d.refunds=[];d._schemaVersion=SCHEMA;return d}
 
@@ -551,7 +551,7 @@ function signed(t){return t.type==='Despesa'?-Number(t.value):Number(t.value)}
 function currentBox(){if(!Array.isArray(data.boxes))data.boxes=[];const el=$('dashBox');const value=el&&el.value;if(value&&data.boxes.includes(value))return value;const last=localStorage.getItem(LAST);if(last&&data.boxes.includes(last))return last;return data.boxes[0]||''}
 function boxBalance(b){return Math.round(activeAccounts(b).reduce((s,a)=>s+Number(a.balance||0),0)*100)/100}
 function boxProjectionStart(b){const dates=activeAccounts(b).map(a=>a.balanceUpdatedAt).filter(Boolean).sort();return dates.length?dates[dates.length-1]:today()}
-function projectionEligible(t,b=t?.box){if(!t||!t.date)return false;let cutoff=boxProjectionStart(b);if(t.accountId){const a=data.accounts.find(x=>x.id===t.accountId);if(a&&a.balanceUpdatedAt)cutoff=a.balanceUpdatedAt;}return t.date>=cutoff}
+function projectionEligible(t,b=t?.box){if(!t||!t.date)return false;/* Uma previsão ainda não baixada continua pendente, mesmo que sua data já tenha passado ou o saldo bancário tenha sido atualizado depois dela. */if(t.status==='Previsto')return true;let cutoff=boxProjectionStart(b);if(t.accountId){const a=data.accounts.find(x=>x.id===t.accountId);if(a&&a.balanceUpdatedAt)cutoff=a.balanceUpdatedAt;}return t.date>=cutoff}
 function boxAvailableBalance(b){return Math.round(boxBalance(b)*100)/100}
 function applyAccountDelta(accountId,delta){if(!accountId)return;const a=data.accounts.find(x=>x.id===accountId);if(a)a.balance=Math.round((Number(a.balance||0)+Number(delta||0))*100)/100}
 function affectsAccount(t){return t && t.status==='Realizado' && t.accountId && t.payment!=='Cartão de crédito' && t.payment!=='Dinheiro'}
