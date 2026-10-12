@@ -106,7 +106,7 @@
 .month-tabs{display:flex;gap:6px;overflow:auto;margin:8px 0 10px;padding-bottom:2px}.month-tab{border:0;border-radius:999px;padding:8px 11px;background:#e7f2ed;color:var(--green);font-weight:800;white-space:nowrap}.month-tab.active{background:var(--green);color:#fff}.month-tab:disabled{opacity:.45}
 </style>
 
-<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 54</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
+<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 55</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
 <main>
 <nav><button class="active" data-tab="inicio">Visão geral</button><button data-tab="lancamentos">Lançamentos</button><button data-tab="cadastros">Cadastros</button><button data-tab="relatorios">Relatórios</button><button data-tab="backup">Backup</button><button data-tab="seguranca">Segurança</button></nav>
 <section id="inicio">
@@ -216,10 +216,10 @@
 <p class="muted">Por segurança, o PIN não é incluído nos backups. Os backups guardam somente os dados financeiros.</p>
 </div></section>
 <section id="backup" class="hidden"><div class="panel"><h2>Backup e recuperação</h2><p>Faça um backup completo dos dados deste aparelho. O arquivo é salvo em formato JSON. No iPhone, ao tocar em <b>Exportar backup</b>, você poderá escolher onde guardar o arquivo, inclusive em <b>Arquivos</b> e, se disponível no aparelho, no <b>Google Drive</b>.</p><div id="backupInfo" class="notice"></div><div class="backup-actions"><button class="backup-action export" type="button" onclick="exportData()">📤 Exportar backup</button><button class="backup-action file" type="button" onclick="$('restoreFile').click()">📂 Restaurar backup de um arquivo</button><button class="backup-action auto" type="button" onclick="restoreAutoBackup()">♻️ Restaurar última cópia automática</button><button class="backup-action update" type="button" onclick="updateAppVersion()">🔄 Atualizar versão do aplicativo</button></div><input class="backup-file-input" type="file" id="restoreFile" accept=".json,application/json"><p class="muted backup-help">Para restaurar um arquivo, toque em <b>Restaurar backup de um arquivo</b> e escolha o backup .json salvo anteriormente. Antes da restauração, o aplicativo cria automaticamente uma cópia de segurança local dos dados atuais.</p><div class="notice" style="margin-top:10px"><strong>🔄 Atualização:</strong> ao tocar em Atualizar versão, o aplicativo cria uma cópia automática dos dados deste navegador e recarrega a página tentando buscar o arquivo mais recente publicado. Para maior segurança, exporte também um backup em arquivo antes de atualizar. O botão não permite manter versões antigas instaladas; ele recarrega a versão que estiver publicada no site.</div><div class="notice" style="margin-top:10px"><strong>🔐 Migração segura:</strong> versões futuras podem migrar os dados em etapas. Antes de uma migração de estrutura, o aplicativo cria uma cópia automática dos dados atuais.</div><div class="notice" style="margin-top:10px"><strong>📱 Atenção no iPhone:</strong> o acesso pelo ícone da Tela de Início e o acesso pelo Safari usam armazenamentos separados. Para levar os mesmos dados de um para o outro, use o backup.</div></div></section>
-<footer>Versão 54 • Despesas de cartão incluídas no gráfico por categoria.</footer>
+<footer>Versão 55 • Correção da associação de compras às faturas por cartão e caixa.</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=54;const SCHEMA=10;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=55;const SCHEMA=10;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
 // Compara nomes ignorando acentos, maiúsculas/minúsculas e espaços repetidos, sem alterar o texto salvo.
 function compareKey(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/\s+/g,' ').trim()}
@@ -706,7 +706,15 @@ function cancelTx(id){
   }
 }
 function renderInvoices(){
-  const cards=activeCards(currentBox());
+  const box=currentBox();
+  const cards=[...activeCards(box)];
+  // Inclui cartões referenciados por lançamentos deste caixa, mesmo que o cadastro antigo
+  // esteja associado a outro caixa ou use o nome do cartão em vez do ID.
+  data.tx.filter(t=>t.box===box&&t.type==='Despesa'&&t.payment==='Cartão de crédito'&&t.status!=='Cancelada').forEach(t=>{
+    let c=cardById(t.cardId);
+    if(!c){const name=t.card||t.cardName||t.cardLabel;c=data.cards.find(x=>name&&sameText(x.name,name));}
+    if(c&&!cards.some(x=>x.id===c.id))cards.push(c);
+  });
   const months=monthKeysFromCurrent(6);
   if(!window.selectedInvoiceMonth||!months.includes(window.selectedInvoiceMonth))window.selectedInvoiceMonth=months[0];
   const tabs=$('invoiceMonthTabs');
@@ -1206,10 +1214,10 @@ function payInvoice(cardId,ym){
 }
 function transactionMatchesCard(t,card){
  if(!t||!card)return false;
- if(t.cardId&&t.cardId===card.id)return true;
+ if(t.cardId&&String(t.cardId)===String(card.id))return true;
  const cardNames=[card.name,card.id];
  const txNames=[t.card,t.cardName,t.cardLabel];
- if(t.cardId&&!cardById(t.cardId))txNames.push(t.cardId);
+ if(t.cardId){const linked=cardById(t.cardId);if(linked)txNames.push(linked.name);else txNames.push(t.cardId);}
  return txNames.some(n=>n&&cardNames.some(cn=>sameText(n,cn)));
 }
 function invoiceDisplayedTotal(cardId,ym){
@@ -1220,15 +1228,16 @@ function invoiceDisplayedTotal(cardId,ym){
    const purchase=data.tx.find(t=>t.id===p.purchaseId);
    // Parcela sem compra correspondente é um registro órfão e nunca deve compor uma fatura.
    if(!purchase||purchase.box!==currentBox()||purchase.status==='Cancelada')return false;
-   if(purchase.type!=='Despesa'||purchase.payment!=='Cartão de crédito'||purchase.cardId!==cardId)return false;
+   if(purchase.type!=='Despesa'||purchase.payment!=='Cartão de crédito'||!transactionMatchesCard(purchase,card))return false;
    const first=invoiceMonth(card,purchase.date);
    const expectedMonth=monthAdd(first,Math.max(0,Number(p.number||1)-1));
-   return p.cardId===cardId&&p.month===expectedMonth;
+   const installmentCard=p.cardId===cardId||sameText((cardById(p.cardId)||{}).name||p.cardId,card.name);
+   return installmentCard&&p.month===expectedMonth;
  });
  const partTotal=parts.reduce((s,p)=>s+Number(p.value||0),0);
  const tx=data.tx.filter(t=>
    t.box===currentBox()&&t.type==='Despesa'&&t.status!=='Cancelada'&&
-   t.payment==='Cartão de crédito'&&t.cardId===cardId&&t.date&&
+   t.payment==='Cartão de crédito'&&transactionMatchesCard(t,card)&&t.date&&
    invoiceMonth(card,t.date)===ym&&
    !data.installments.some(p=>p.purchaseId===t.id)
  );
