@@ -9,7 +9,7 @@
 
 .cat-mode-toggle{display:flex;gap:4px;background:#edf5fc;border-radius:999px;padding:3px}.cat-mode{border:0;border-radius:999px;padding:7px 10px;background:transparent;color:var(--blue);font-weight:800;font-size:12px}.cat-mode.active{background:var(--blue);color:#fff}.category-chart-wrap{min-height:170px}.category-chart{width:170px;height:170px;border-radius:50%;margin:10px auto 14px;position:relative;box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}.category-chart:after{content:"";position:absolute;inset:42px;border-radius:50%;background:#fff}.category-total{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:2;font-weight:900;color:var(--ink);font-size:16px}.category-total small{font-size:11px;color:var(--muted);font-weight:700}.category-legend{display:grid;gap:7px}.category-legend-row{display:grid;grid-template-columns:12px 1fr auto;gap:8px;align-items:center}.category-dot{width:11px;height:11px;border-radius:50%}.category-empty{text-align:center;padding:12px 0}.
 
-.history-filter{margin:8px 0 4px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#f8fbf9}.history-filter summary{font-weight:800;color:var(--green);cursor:pointer;list-style:none}.history-filter summary::-webkit-details-marker{display:none}.history-filter summary:after{content:'＋';float:right}.history-filter[open] summary:after{content:'−'}.history-filter-body{padding-top:8px}.tx-entry{padding:12px 0;border-bottom:1px solid var(--line)}.tx-entry:last-child{border-bottom:0}.tx-entry-main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start}.tx-entry-info{min-width:0;overflow-wrap:anywhere}.tx-entry-info>strong{display:block;margin-bottom:3px}.tx-entry-meta{line-height:1.35;font-size:13px}.tx-entry-amount{white-space:nowrap;text-align:right;font-size:16px}.tx-entry-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:9px}.tx-entry-actions .btn{width:100%;padding:9px 4px;text-align:center;min-width:0}.tx-entry-actions .btn:only-child{grid-column:1/-1}@media(max-width:430px){.tx-entry-main{gap:7px}.tx-entry-amount{font-size:15px}.tx-entry-meta{font-size:12px}.tx-entry-actions{gap:6px}.tx-entry-actions .btn{font-size:13px;padding:9px 2px}}
+.history-filter{margin:8px 0 4px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#f8fbf9}.history-filter summary{font-weight:800;color:var(--green);cursor:pointer;list-style:none}.history-filter summary::-webkit-details-marker{display:none}.history-filter summary:after{content:'＋';float:right}.history-filter[open] summary:after{content:'−'}.history-filter-body{padding-top:8px}.tx-entry{padding:12px 0;border-bottom:1px solid var(--line)}.tx-entry:last-child{border-bottom:0}.tx-entry-main{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start}.tx-entry-info{min-width:0;overflow-wrap:anywhere}.tx-entry-info>strong{display:block;margin-bottom:3px}.tx-entry-meta{line-height:1.35;font-size:13px}.tx-entry-amount{white-space:nowrap;text-align:right;font-size:16px}.tx-entry-actions{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;margin-top:14px}.tx-entry-actions .btn{flex:1 1 180px;width:auto;min-width:0;min-height:44px;padding:11px 14px;text-align:center;white-space:normal;line-height:1.25;overflow-wrap:anywhere}.tx-entry-actions .btn:only-child{flex-basis:100%}.tx-entry[style*="border:1px dashed"] .tx-entry-actions .btn{flex:1 1 190px}@media(max-width:430px){.tx-entry-main{gap:7px}.tx-entry-amount{font-size:15px}.tx-entry-meta{font-size:12px}.tx-entry-actions{gap:10px;margin-top:14px}.tx-entry-actions .btn{flex:1 1 100%;font-size:14px;padding:12px 14px;min-height:46px}}
 </style>
 <style>
 /* Backup actions and update control */
@@ -219,7 +219,7 @@
 <footer>Versão 58 • Correção de fatura indevidamente marcada como paga e recuperação do lançamento no dashboard.</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=57;const SCHEMA=10;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=59;const SCHEMA=10;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
 // Compara nomes ignorando acentos, maiúsculas/minúsculas e espaços repetidos, sem alterar o texto salvo.
 function compareKey(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/\s+/g,' ').trim()}
@@ -764,6 +764,7 @@ function recurringProjectedTx(box,start,end){
     const dates=recurringDates(r.startDate,end,r.frequency);
     dates.forEach(d=>{
       if(d===r.startDate)return;
+      if(Array.isArray(r.skippedDates)&&r.skippedDates.includes(d))return;
       if(start&&d<start)return;
       if(end&&d>end)return;
       const alreadyRecorded=data.tx.some(t=>t.box===r.box&&t.type===r.type&&t.date===d&&String(t.desc||'').trim().toLocaleLowerCase()===String(r.desc||'').trim().toLocaleLowerCase()&&t.status!=='Cancelada');
@@ -953,7 +954,7 @@ function renderHistory(){
  $('history').innerHTML=rows.map(txHTML).join('')||'<p class="muted">Nenhum lançamento ou previsão encontrado com esses filtros.</p>';
 }
 function clearHistoryFilters(){['historyStart','historyEnd'].forEach(id=>$(id).value='');['historyType','historyRecurring','historyCategory','historyParty'].forEach(id=>$(id).value='Todos');historyOptions();renderHistory();}
-function txHTML(t){if(t.virtualRecurring){const rid=String(t.id).startsWith('virtual_')?String(t.id).slice(8).replace(new RegExp('_'+t.date+'$'),''):'';return `<div class="tx-entry" style="border:1px dashed #9ac9b8;background:#f5fbf8"><div class="tx-entry-main"><div class="tx-entry-info"><strong>${esc(t.desc)}</strong><div class="muted tx-entry-meta">${mcfBRDate(t.date)} · Previsto · 🔄 Recorrência futura${t.payment?' · '+esc(t.payment):''}${partyName(t)?' · '+esc(partyName(t)):''}${t.category?' · '+esc(t.category):''}${(t.accountId||t.account)?' · 🏦 '+esc(accountName(t.accountId)||t.account):''}</div></div><strong class="tx-entry-amount ${signed(t)>=0?'positive':'negative'}">${money(signed(t))}</strong></div><p class="muted" style="margin:8px 0 0">Esta é uma ocorrência prevista, ainda não um lançamento efetivado. Você pode editar a regra recorrente ou encerrar as próximas ocorrências.</p><div class="tx-entry-actions"><button class="btn" onclick="editRecurringRule('${t.id}')">Editar recorrência</button><button class="btn" onclick="stopRecurringRule('${t.id}')">Excluir recorrência</button></div></div>`}return `<div class="tx-entry"><div class="tx-entry-main"><div class="tx-entry-info"><strong>${esc(t.desc)}</strong><div class="muted tx-entry-meta">${mcfBRDate(t.date)} · ${esc(t.status)}${t.payment?' · '+esc(t.payment):''}${partyName(t)?' · '+esc(partyName(t)):''}${t.category?' · '+esc(t.category):''}${t.status==='Cancelada'?' · 🚫 Cancelada':''}${refundTotal(t.id)>0?' · ↩ Estorno '+money(refundTotal(t.id)):''}${(t.accountId||t.account)?' · 🏦 '+esc(accountName(t.accountId)||t.account):''}${t.recurring==='Sim'?' · 🔄 Recorrente':''}${t.payment==='Cartão de crédito'&&(t.cardId||t.card)?' · 💳 '+esc((cardById(t.cardId)||{}).name||t.card||''):''}</div></div><strong class="tx-entry-amount ${signed(t)>=0?'positive':'negative'}">${money(signed(t))}</strong></div><div class="tx-entry-actions"><button class="btn" onclick="editTx('${t.id}')">Editar</button>${t.status==='Realizado'&&t.type==='Despesa'?`<button class="btn" onclick="registerRefund('${t.id}')">Estorno</button>`:''}<button class="btn" onclick="removeTx('${t.id}')">Excluir</button></div></div>`}
+function txHTML(t){if(t.virtualRecurring){const rid=String(t.id).startsWith('virtual_')?String(t.id).slice(8).replace(new RegExp('_'+t.date+'$'),''):'';return `<div class="tx-entry" style="border:1px dashed #9ac9b8;background:#f5fbf8"><div class="tx-entry-main"><div class="tx-entry-info"><strong>${esc(t.desc)}</strong><div class="muted tx-entry-meta">${mcfBRDate(t.date)} · Previsto · 🔄 Recorrência futura${t.payment?' · '+esc(t.payment):''}${partyName(t)?' · '+esc(partyName(t)):''}${t.category?' · '+esc(t.category):''}${(t.accountId||t.account)?' · 🏦 '+esc(accountName(t.accountId)||t.account):''}</div></div><strong class="tx-entry-amount ${signed(t)>=0?'positive':'negative'}">${money(signed(t))}</strong></div><p class="muted" style="margin:8px 0 0">Esta é uma ocorrência prevista, ainda não efetivada. Você pode editar a regra, excluir somente esta data ou encerrar esta e as próximas ocorrências.</p><div class="tx-entry-actions"><button class="btn" onclick="editRecurringRule('${t.id}')">Editar recorrência</button><button class="btn" onclick="stopRecurringRule('${t.id}')">Excluir recorrência</button></div></div>`}return `<div class="tx-entry"><div class="tx-entry-main"><div class="tx-entry-info"><strong>${esc(t.desc)}</strong><div class="muted tx-entry-meta">${mcfBRDate(t.date)} · ${esc(t.status)}${t.payment?' · '+esc(t.payment):''}${partyName(t)?' · '+esc(partyName(t)):''}${t.category?' · '+esc(t.category):''}${t.status==='Cancelada'?' · 🚫 Cancelada':''}${refundTotal(t.id)>0?' · ↩ Estorno '+money(refundTotal(t.id)):''}${(t.accountId||t.account)?' · 🏦 '+esc(accountName(t.accountId)||t.account):''}${t.recurring==='Sim'?' · 🔄 Recorrente':''}${t.payment==='Cartão de crédito'&&(t.cardId||t.card)?' · 💳 '+esc((cardById(t.cardId)||{}).name||t.card||''):''}</div></div><strong class="tx-entry-amount ${signed(t)>=0?'positive':'negative'}">${money(signed(t))}</strong></div><div class="tx-entry-actions"><button class="btn" onclick="editTx('${t.id}')">Editar</button>${t.status==='Realizado'&&t.type==='Despesa'?`<button class="btn" onclick="registerRefund('${t.id}')">Estorno</button>`:''}<button class="btn" onclick="removeTx('${t.id}')">Excluir</button></div></div>`}
 function showTab(tab){document.querySelectorAll('main>section').forEach(s=>s.classList.add('hidden'));$(tab).classList.remove('hidden');document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));render()}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 function updateTypeUI(){
@@ -1306,10 +1307,24 @@ function editRecurringRule(virtualId){
 }
 function stopRecurringRule(virtualId){
  const t=projectedRecurringFromId(virtualId);if(!t)return;
- const r=(data.recurring||[]).find(x=>x.active!==false&&x.box===t.box&&x.type===t.type&&sameText(x.desc,t.desc)&&sameText(x.party||'',t.party||''));
+ const r=(data.recurring||[]).find(x=>x.id===String(virtualId).slice(8).replace(new RegExp('_'+t.date+'$'),'')&&x.active!==false);
  if(!r){alert('Não foi possível localizar a regra recorrente.');return}
- if(!confirm('Encerrar a recorrência de “'+r.desc+'”? As próximas ocorrências deixarão de aparecer. Os lançamentos anteriores serão preservados.'))return;
- r.active=false;persist();renderHistory();
+ const choice=prompt('Como deseja excluir a ocorrência de '+mcfBRDate(t.date)+'?\n\n1 — Excluir somente esta ocorrência\n2 — Excluir esta e todas as próximas ocorrências\n0 — Cancelar','1');
+ if(choice===null||choice==='0')return;
+ if(choice==='1'){
+   if(!confirm('Excluir somente a ocorrência de '+mcfBRDate(t.date)+' de “'+r.desc+'”? As outras semanas e os meses seguintes serão mantidos.'))return;
+   if(!Array.isArray(r.skippedDates))r.skippedDates=[];
+   if(!r.skippedDates.includes(t.date))r.skippedDates.push(t.date);
+   persist();renderHistory();return;
+ }
+ if(choice==='2'){
+   if(!confirm('Excluir a ocorrência de '+mcfBRDate(t.date)+' e todas as seguintes de “'+r.desc+'”? As ocorrências anteriores serão preservadas.'))return;
+   const dt=new Date(t.date+'T12:00:00');dt.setDate(dt.getDate()-1);
+   const cutoff=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
+   if(!r.endDate||r.endDate>cutoff)r.endDate=cutoff;
+   persist();renderHistory();return;
+ }
+ alert('Opção inválida. Digite 1, 2 ou 0.');
 }
 function launchProjectedReceipt(virtualId){
  const t=projectedRecurringFromId(virtualId); if(!t||t.type!=='Receita')return;
