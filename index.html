@@ -104,6 +104,7 @@
 .mcf-quick-grid button:hover{background:#eef7f3}
 .mcf-quick-note{font-size:12px;color:#66756f;margin-top:9px}.restore-btn{background:#e8f2ff;color:#246fb2}
 .month-tabs{display:flex;gap:6px;overflow:auto;margin:8px 0 10px;padding-bottom:2px}.month-tab{border:0;border-radius:999px;padding:8px 11px;background:#e7f2ed;color:var(--green);font-weight:800;white-space:nowrap}.month-tab.active{background:var(--green);color:#fff}.month-tab:disabled{opacity:.45}
+.app-history{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.app-history-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px}.app-history-tabs{display:flex;gap:4px;background:#edf5fc;border-radius:999px;padding:3px}.app-history-tabs button{border:0;border-radius:999px;padding:6px 10px;background:transparent;color:var(--blue);font-size:11px;font-weight:800}.app-history-tabs button.active{background:var(--blue);color:white}.app-history-chart{min-height:96px;padding-top:7px}.app-history-chart svg{display:block;width:100%;height:auto;max-height:145px}.app-history-note{font-size:11px;color:var(--muted);margin:3px 0 0}
 </style>
 
 <header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 62</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
@@ -114,7 +115,7 @@
 <div class="cards" id="dashboardCards"></div><div class="panel dashboard-panel bank-panel"><h2>🏦 Saldo por banco</h2><div id="bankBalances"></div></div>
 <div class="panel dashboard-panel app-panel"><div class="section-title"><h2>📈 Aplicações</h2><span class="tag blue" id="appTotal">R$ 0,00</span></div>
 <div class="item app-immediate-row"><span>Disponibilidade imediata · informativo</span><strong id="appImmediate">R$ 0,00</strong></div>
-<div id="dashboardApplicationsList"></div>
+<div id="dashboardApplicationsList"></div><div class="app-history"><div class="app-history-head"><strong>Histórico do total aplicado</strong><div class="app-history-tabs"><button type="button" class="active" data-app-history="month" onclick="setApplicationHistoryMode('month')">Mensal</button><button type="button" data-app-history="year" onclick="setApplicationHistoryMode('year')">Anual</button></div></div><div id="applicationHistoryChart" class="app-history-chart"></div></div>
 </div>
 <div class="summary3" id="monthSummary"></div><div class="panel hidden" id="monthSummaryDetails" aria-live="polite"></div>
 <div class="panel dashboard-panel income-panel"><div class="section-title"><h2>🟢 Recebimentos previstos</h2><span class="tag green" id="incomeDueCount">0</span></div><div id="incomeMonthTabs" class="month-tabs"></div><div id="incomeDueList" class="muted">Nenhum recebimento previsto.</div></div>
@@ -279,7 +280,12 @@ function renderAccounts(){
   const sortedBanks=list.slice().filter(a=>Math.abs(Number(a.balance||0))>0.000001).sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
   $('bankBalances').innerHTML=sortedBanks.length?sortedBanks.map(a=>`<div class="item"><span>${esc(a.name)}</span><strong>${money(a.balance)}</strong></div>`).join(''):'<p class="muted">Nenhuma conta com saldo.</p>';
 }
-if(!Array.isArray(data.applications))data.applications=[];
+if(!Array.isArray(data.applications))data.applications=[];if(!Array.isArray(data.applicationHistory))data.applicationHistory=[];
+let applicationHistoryMode='month';
+function setApplicationHistoryMode(mode){applicationHistoryMode=mode;document.querySelectorAll('[data-app-history]').forEach(b=>b.classList.toggle('active',b.dataset.appHistory===mode));renderApplicationHistory()}
+function recordApplicationHistory(box){if(!Array.isArray(data.applicationHistory))data.applicationHistory=[];const apps=activeApplications(box);data.applicationHistory.push({date:today(),box,total:Math.round(apps.reduce((sum,a)=>sum+Number(a.balance||0),0)*100)/100});}
+function renderApplicationHistory(){const el=$('applicationHistoryChart');if(!el)return;const box=currentBox();const raw=(data.applicationHistory||[]).filter(h=>h.box===box&&h.date&&Number.isFinite(Number(h.total)));const grouped=new Map();raw.forEach(h=>{const key=applicationHistoryMode==='month'?h.date.slice(0,7):h.date.slice(0,4);const old=grouped.get(key);if(!old||h.date>old.date)grouped.set(key,h)});const points=[...grouped.entries()].sort((a,b)=>a[0].localeCompare(b[0])).slice(applicationHistoryMode==='month'?-8:-6);if(!points.length){el.innerHTML='<p class="app-history-note">O histórico começa a ser registrado a partir de agora, ao cadastrar ou atualizar o saldo de uma aplicação. Os saldos antigos não podem ser reconstruídos automaticamente.</p>';return}const vals=points.map(p=>Number(p[1].total));const min=Math.min(...vals),max=Math.max(...vals),range=max-min||Math.max(1,max*.05);const W=320,H=112,T=10,B=25;const coords=vals.map((v,i)=>({x:8+(points.length===1?152:i*304/(points.length-1)),y:T+(max-v)/range*(H-T-B)}));const poly=coords.map(p=>p.x+','+p.y).join(' ');const labels=points.map((p,i)=>`<text x="${coords[i].x}" y="${H-7}" text-anchor="middle" font-size="9" fill="#66756e">${esc(applicationHistoryMode==='month'?p[0].slice(5,7)+'/'+p[0].slice(2,4):p[0])}</text>`).join('');const dots=coords.map((p,i)=>`<circle cx="${p.x}" cy="${p.y}" r="3" fill="#2867a8"><title>${esc(points[i][0])}: ${money(vals[i])}</title></circle>`).join('');el.innerHTML=`<div style="font-size:14px;font-weight:800;color:var(--blue)">${money(vals[vals.length-1])}</div><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução do total aplicado"><line x1="8" y1="${H-B}" x2="312" y2="${H-B}" stroke="#dce6e0"/><polyline points="${poly}" fill="none" stroke="#2867a8" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${dots}${labels}</svg>`;}
+
 function activeApplications(b){return data.applications.filter(a=>a.box===b&&a.active!==false)}
 function applicationTotals(b){
   const apps=activeApplications(b);
@@ -301,7 +307,7 @@ function renderApplications(){
   const sortedApps=apps.slice().filter(a=>Math.abs(Number(a.balance||0))>0.000001).sort((a,b)=>Number(b.balance||0)-Number(a.balance||0));
   $('dashboardApplicationsList').innerHTML=sortedApps.length?sortedApps.map(a=>`<div class="item"><span><strong>${esc(a.institution)} — ${esc(a.description)}</strong><div class="muted">${a.liquidity==='Imediata'?'Liquidez imediata':a.liquidity==='Parcial'?'Liquidez parcial':a.liquidity==='Sem liquidez imediata'?'Sem liquidez imediata':'Liquidez não informada'}</div></span><strong>${money(a.balance)}</strong></div>`).join(''):'<p class="muted">Nenhuma aplicação com saldo.</p>';
   $('appBalanceUpdatedAt').textContent=editingApplicationId?((data.applications.find(a=>a.id===editingApplicationId)||{}).balanceUpdatedAt?('Última atualização manual: '+mcfBRDate(data.applications.find(a=>a.id===editingApplicationId).balanceUpdatedAt)):'Nenhuma atualização manual registrada ainda'):'A data será registrada ao informar o saldo inicial';
-  $('appTotal').textContent=money(totals.total);
+  $('appTotal').textContent=money(totals.total);renderApplicationHistory();
   $('appImmediate').textContent=money(totals.immediate);
   const immediateRow=$('appImmediate')?.closest('.item');
   if(immediateRow)immediateRow.classList.toggle('hidden',Math.abs(totals.immediate)<=0.000001);
@@ -1182,10 +1188,10 @@ const box=$('appBox').value,institution=$('appInstitution').value.trim(),descrip
 if(!box||!institution||!description||!Number.isFinite(balance)||balance<0){alert('Preencha instituição, descrição e saldo válido.');return}
 if(editingApplicationId){
   const a=data.applications.find(x=>x.id===editingApplicationId);
-  if(a){a.box=box;a.institution=institution;a.description=description;a.type=type;a.balance=Math.round(balance*100)/100;a.liquidity=liquidity;a.active=true;if(applicationBalanceTouched)a.balanceUpdatedAt=today();}
+  if(a){a.box=box;a.institution=institution;a.description=description;a.type=type;a.balance=Math.round(balance*100)/100;a.liquidity=liquidity;a.active=true;if(applicationBalanceTouched){a.balanceUpdatedAt=today();recordApplicationHistory(box);}}
   cancelApplicationEdit();applicationBalanceTouched=false;
 }else{
-  data.applications.push({id:'app_'+Date.now(),box,institution,description,type,balance:Math.round(balance*100)/100,balanceUpdatedAt:today(),liquidity,active:true});applicationBalanceTouched=false;
+  data.applications.push({id:'app_'+Date.now(),box,institution,description,type,balance:Math.round(balance*100)/100,balanceUpdatedAt:today(),liquidity,active:true});recordApplicationHistory(box);applicationBalanceTouched=false;
   $('appInstitution').value='';$('appDescription').value='';$('appType').value='';$('appBalance').value='';$('appLiquidity').value='';$('appBalanceUpdatedAt').textContent='A data será registrada ao informar o saldo inicial';
 }
 persist();
