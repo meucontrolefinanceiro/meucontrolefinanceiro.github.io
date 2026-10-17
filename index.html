@@ -109,7 +109,7 @@
 .app-history{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.app-history-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px}.app-history-tabs{display:flex;gap:4px;background:#edf5fc;border-radius:999px;padding:3px}.app-history-tabs button{border:0;border-radius:999px;padding:6px 10px;background:transparent;color:var(--blue);font-size:11px;font-weight:800}.app-history-tabs button.active{background:var(--blue);color:white}.app-history-chart{min-height:96px;padding-top:7px}.app-history-chart svg{display:block;width:100%;height:auto;max-height:145px}.app-history-note{font-size:11px;color:var(--muted);margin:3px 0 0}
 </style>
 
-<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 67</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
+<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 68</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
 <main>
 <nav><button class="active" data-tab="inicio">Visão geral</button><button data-tab="lancamentos">Lançamentos</button><button data-tab="cadastros">Cadastros</button><button data-tab="relatorios">Relatórios</button><button data-tab="backup">Backup</button><button data-tab="seguranca">Segurança</button></nav>
 <section id="inicio">
@@ -232,10 +232,10 @@
 <p class="muted">Por segurança, o PIN não é incluído nos backups. Os backups guardam somente os dados financeiros.</p>
 </div></section>
 <section id="backup" class="hidden"><div class="panel"><h2>Backup e recuperação</h2><p>Faça um backup completo dos dados deste aparelho. O arquivo é salvo em formato JSON. No iPhone, ao tocar em <b>Exportar backup</b>, você poderá escolher onde guardar o arquivo, inclusive em <b>Arquivos</b> e, se disponível no aparelho, no <b>Google Drive</b>.</p><div id="backupInfo" class="notice"></div><div class="backup-actions"><button class="backup-action export" type="button" onclick="exportData()">📤 Exportar backup</button><button class="backup-action file" type="button" onclick="$('restoreFile').click()">📂 Restaurar backup de um arquivo</button><button class="backup-action auto" type="button" onclick="restoreAutoBackup()">♻️ Restaurar última cópia automática</button><button class="backup-action update" type="button" onclick="updateAppVersion()">🔄 Atualizar versão do aplicativo</button></div><input class="backup-file-input" type="file" id="restoreFile" accept=".json,application/json"><p class="muted backup-help">Para restaurar um arquivo, toque em <b>Restaurar backup de um arquivo</b> e escolha o backup .json salvo anteriormente. Antes da restauração, o aplicativo cria automaticamente uma cópia de segurança local dos dados atuais.</p><div class="notice" style="margin-top:10px"><strong>🔄 Atualização:</strong> ao tocar em Atualizar versão, o aplicativo cria uma cópia automática dos dados deste navegador e recarrega a página tentando buscar o arquivo mais recente publicado. Para maior segurança, exporte também um backup em arquivo antes de atualizar. O botão não permite manter versões antigas instaladas; ele recarrega a versão que estiver publicada no site.</div><div class="notice" style="margin-top:10px"><strong>🔐 Migração segura:</strong> versões futuras podem migrar os dados em etapas. Antes de uma migração de estrutura, o aplicativo cria uma cópia automática dos dados atuais.</div><div class="notice" style="margin-top:10px"><strong>📱 Atenção no iPhone:</strong> o acesso pelo ícone da Tela de Início e o acesso pelo Safari usam armazenamentos separados. Para levar os mesmos dados de um para o outro, use o backup.</div></div></section>
-<footer>Versão 67</footer>
+<footer>Versão 68</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=67;const SCHEMA=10;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=68;const SCHEMA=10;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
 // Compara nomes ignorando acentos, maiúsculas/minúsculas e espaços repetidos, sem alterar o texto salvo.
 function compareKey(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/\s+/g,' ').trim()}
@@ -980,7 +980,12 @@ function renderHistory(){
  if(filtered||totalPages<=1){pager.innerHTML='';pager.classList.add('hidden')}else{pager.classList.remove('hidden');pager.innerHTML=`<button type="button" ${historyPage===1?'disabled':''} onclick="historyPage=1;renderHistory()">« Primeira</button><button type="button" ${historyPage===1?'disabled':''} onclick="historyPage--;renderHistory()">‹ Anterior</button><span class="current">Página ${historyPage} de ${totalPages}</span><button type="button" ${historyPage===totalPages?'disabled':''} onclick="historyPage++;renderHistory()">Próxima ›</button><button type="button" ${historyPage===totalPages?'disabled':''} onclick="historyPage=${totalPages};renderHistory()">Última »</button>`}
 }
 function clearHistoryFilters(){['historyStart','historyEnd'].forEach(id=>$(id).value='');['historyType','historyRecurring','historyCategory','historyParty'].forEach(id=>$(id).value='Todos');historyPage=1;historyOptions();renderHistory();}
-function txHTML(t){if(t.virtualRecurring){const rid=String(t.id).startsWith('virtual_')?String(t.id).slice(8).replace(new RegExp('_'+t.date+'$'),''):'';return `<div class="tx-entry" style="border:1px dashed #9ac9b8;background:#f5fbf8"><div class="tx-entry-main"><div class="tx-entry-info"><strong>${esc(t.desc)}</strong><div class="muted tx-entry-meta">${mcfBRDate(t.date)} · Previsto · 🔄 Recorrência futura${t.payment?' · '+esc(t.payment):''}${partyName(t)?' · '+esc(partyName(t)):''}${t.category?' · '+esc(t.category):''}${(t.accountId||t.account)?' · 🏦 '+esc(accountName(t.accountId)||t.account):''}</div></div><strong class="tx-entry-amount ${signed(t)>=0?'positive':'negative'}">${money(signed(t))}</strong></div><p class="muted" style="margin:8px 0 0">Esta é uma ocorrência prevista, ainda não efetivada. Você pode editar a regra, excluir somente esta data ou encerrar esta e as próximas ocorrências.</p><div class="tx-entry-actions"><button class="btn" onclick="editRecurringRule('${t.id}')">Editar recorrência</button><button class="btn danger" onclick="stopRecurringRule('${t.id}','one')">Excluir somente esta ocorrência</button><button class="btn danger" onclick="stopRecurringRule('${t.id}','future')">Excluir esta e as próximas</button></div></div>`}return `<div class="tx-entry"><div class="tx-entry-main"><div class="tx-entry-info"><strong>${esc(t.desc)}</strong><div class="muted tx-entry-meta">${mcfBRDate(t.date)} · ${esc(t.status)}${t.payment?' · '+esc(t.payment):''}${partyName(t)?' · '+esc(partyName(t)):''}${t.category?' · '+esc(t.category):''}${t.status==='Cancelada'?' · 🚫 Cancelada':''}${refundTotal(t.id)>0?' · ↩ Estorno '+money(refundTotal(t.id)):''}${(t.accountId||t.account)?' · 🏦 '+esc(accountName(t.accountId)||t.account):''}${t.recurring==='Sim'?' · 🔄 Recorrente':''}${t.payment==='Cartão de crédito'&&(t.cardId||t.card)?' · 💳 '+esc((cardById(t.cardId)||{}).name||t.card||''):''}</div></div><strong class="tx-entry-amount ${signed(t)>=0?'positive':'negative'}">${money(signed(t))}</strong></div><div class="tx-entry-actions"><button class="btn" onclick="editTx('${t.id}')">Editar</button>${t.status==='Realizado'&&t.type==='Despesa'?`<button class="btn" onclick="registerRefund('${t.id}')">Estorno</button>`:''}<button class="btn" onclick="removeTx('${t.id}')">Excluir</button></div></div>`}
+function txHTML(t){
+ const recurringButtons=(id)=>`<div class="tx-entry-actions"><button class="btn" onclick="editRecurringOccurrence('${id}','one')">Editar somente esta ocorrência</button><button class="btn" onclick="editRecurringOccurrence('${id}','all')">Editar todas as ocorrências</button><button class="btn danger" onclick="stopRecurringRule('${id}','one')">Excluir somente esta ocorrência</button><button class="btn danger" onclick="stopRecurringRule('${id}','future')">Excluir todas as ocorrências</button></div>`;
+ if(t.virtualRecurring){return `<div class="tx-entry" style="border:1px dashed #9ac9b8;background:#f5fbf8"><div class="tx-entry-main"><div class="tx-entry-info"><strong>${esc(t.desc)}</strong><div class="muted tx-entry-meta">${mcfBRDate(t.date)} · Previsto · 🔄 Recorrência futura${t.payment?' · '+esc(t.payment):''}${partyName(t)?' · '+esc(partyName(t)):''}${t.category?' · '+esc(t.category):''}${(t.accountId||t.account)?' · 🏦 '+esc(accountName(t.accountId)||t.account):''}</div></div><strong class="tx-entry-amount ${signed(t)>=0?'positive':'negative'}">${money(signed(t))}</strong></div>${recurringButtons(t.id)}</div>`}
+ const isRecurring=t.recurring==='Sim'&&(data.recurring||[]).some(r=>r.active!==false&&r.box===t.box&&r.type===t.type&&r.startDate===t.date&&sameText(r.desc,t.desc));
+ return `<div class="tx-entry"><div class="tx-entry-main"><div class="tx-entry-info"><strong>${esc(t.desc)}</strong><div class="muted tx-entry-meta">${mcfBRDate(t.date)} · ${esc(t.status)}${t.payment?' · '+esc(t.payment):''}${partyName(t)?' · '+esc(partyName(t)):''}${t.category?' · '+esc(t.category):''}${t.status==='Cancelada'?' · 🚫 Cancelada':''}${refundTotal(t.id)>0?' · ↩ Estorno '+money(refundTotal(t.id)):''}${(t.accountId||t.account)?' · 🏦 '+esc(accountName(t.accountId)||t.account):''}${t.recurring==='Sim'?' · 🔄 Recorrente':''}${t.payment==='Cartão de crédito'&&(t.cardId||t.card)?' · 💳 '+esc((cardById(t.cardId)||{}).name||t.card||''):''}</div></div><strong class="tx-entry-amount ${signed(t)>=0?'positive':'negative'}">${money(signed(t))}</strong></div>${isRecurring?recurringButtons(t.id):`<div class="tx-entry-actions"><button class="btn" onclick="editTx('${t.id}')">Editar</button>${t.status==='Realizado'&&t.type==='Despesa'?`<button class="btn" onclick="registerRefund('${t.id}')">Estorno</button>`:''}<button class="btn" onclick="removeTx('${t.id}')">Excluir</button></div>`}</div>`
+}
 function showTab(tab){document.querySelectorAll('main>section').forEach(s=>s.classList.add('hidden'));$(tab).classList.remove('hidden');document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));render()}
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 function updateTypeUI(){
@@ -1323,6 +1328,35 @@ function unpaidInvoiceTotal(box,ym){
  });
  return Math.round(total*100)/100;
 }
+function recurringRuleForOccurrence(t){
+ if(!t)return null;
+ if(t.virtualRecurring){const raw=String(t.id||'');const date=t.date;const rid=raw.startsWith('virtual_')?raw.slice(8,raw.length-date.length-1):'';return (data.recurring||[]).find(r=>r.id===rid&&r.active!==false)||null;}
+ return (data.recurring||[]).find(r=>r.active!==false&&r.box===t.box&&r.type===t.type&&r.startDate===t.date&&sameText(r.desc,t.desc))||null;
+}
+function editRecurringOccurrence(id,mode){
+ let t;
+ if(String(id).startsWith('virtual_'))t=projectedRecurringFromId(id);
+ else {const source=data.tx.find(x=>x.id===id);if(source){t={...source,virtualRecurring:false};}}
+ if(!t){alert('Não foi possível localizar esta ocorrência.');return}
+ const r=recurringRuleForOccurrence(t);
+ if(!r){alert('Não foi possível localizar a regra da recorrência. Nenhuma alteração foi feita.');return}
+ if(mode==='all'){
+   const source=data.tx.find(x=>x.box===r.box&&x.type===r.type&&x.date===r.startDate&&sameText(x.desc,r.desc)&&x.recurring==='Sim');
+   if(source){editTx(source.id);return}
+   alert('Não encontrei o lançamento original para editar toda a recorrência. Nenhuma alteração foi feita.');return;
+ }
+ const desc=prompt('Descrição desta ocorrência:',t.desc||r.desc||'');if(desc===null)return;
+ const valueText=prompt('Valor desta ocorrência:',Number(t.value||r.value||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}));if(valueText===null)return;
+ const value=parseBR(valueText);if(!Number.isFinite(value)||value<=0){alert('Valor inválido. Nenhuma alteração foi feita.');return}
+ if(!confirm('Salvar estas alterações somente em '+mcfBRDate(t.date)+'? As outras ocorrências serão mantidas.'))return;
+ if(!Array.isArray(r.skippedDates))r.skippedDates=[];
+ if(!r.skippedDates.includes(t.date))r.skippedDates.push(t.date);
+ const rec={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),box:r.box,type:r.type,desc:desc.trim()||r.desc,party:r.party||'',value,date:t.date,status:'Previsto',category:r.category||'',payment:r.payment||'',accountId:r.accountId||'',cardId:r.cardId||'',recurring:'Não',frequency:'',note:''};
+ if(!t.virtualRecurring){const existing=data.tx.find(x=>x.id===t.id);if(existing){existing.recurring='Não';existing.desc=rec.desc;existing.value=value;existing.category=rec.category;existing.party=rec.party;existing.payment=rec.payment;existing.accountId=rec.accountId;existing.cardId=rec.cardId;}}
+ else data.tx.push(rec);
+ persist();alert('Somente esta ocorrência foi alterada. As demais foram mantidas.');
+}
+
 function projectedRecurringFromId(virtualId){
  const raw=String(virtualId||'');
  if(!raw.startsWith('virtual_'))return null;
@@ -1344,15 +1378,16 @@ function editRecurringRule(virtualId){
  showTab('lancamentos');$('type').value=r.type;$('desc').value=r.desc||'';$('party').value=r.party||'';$('value').value=Number(r.value||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});$('date').value=r.startDate||t.date;$('box').value=r.box;$('status').value='Previsto';$('category').value=r.category||'';$('payment').value=r.payment||'';$('accountSelect').value=r.accountId||'';$('cardSelect').value=r.cardId||'';$('recurring').value='Sim';$('frequency').value=r.frequency||'Mensal';$('endDate').value=r.endDate||'';updateTypeUI();$('payment').dispatchEvent(new Event('change'));$('recurring').dispatchEvent(new Event('change'));alert('Confira os dados antes de salvar. Para evitar criar uma recorrência duplicada, cancele este cadastro e edite a regra na área de Recorrências se ela estiver disponível.');
 }
 function stopRecurringRule(virtualId,mode){
- const t=projectedRecurringFromId(virtualId);if(!t)return;
- const raw=String(virtualId||'');
- const rid=raw.startsWith('virtual_')&&t.date?raw.slice(8,raw.length-t.date.length-1):'';
- const r=(data.recurring||[]).find(x=>x.id===rid&&x.active!==false);
+ let t; const raw=String(virtualId||'');
+ if(raw.startsWith('virtual_'))t=projectedRecurringFromId(virtualId);else{const source=data.tx.find(x=>x.id===virtualId);if(source)t={...source,virtualRecurring:false};}
+ if(!t)return;
+ const r=recurringRuleForOccurrence(t);
  if(!r){alert('Não foi possível localizar a regra recorrente. Nenhuma alteração foi feita.');return}
  if(mode==='one'){
    if(!confirm('Excluir somente a ocorrência de '+mcfBRDate(t.date)+' de “'+r.desc+'”? As outras semanas e os meses seguintes serão mantidos.'))return;
    if(!Array.isArray(r.skippedDates))r.skippedDates=[];
    if(!r.skippedDates.includes(t.date))r.skippedDates.push(t.date);
+   if(!t.virtualRecurring){const source=data.tx.find(x=>x.id===t.id);if(source){source.status='Cancelada';source.recurring='Não';}}
    persist();render();alert('Somente a ocorrência de '+mcfBRDate(t.date)+' foi excluída. As demais ocorrências foram mantidas.');return;
  }
  if(mode==='future'){
