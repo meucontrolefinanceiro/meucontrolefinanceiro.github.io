@@ -109,7 +109,7 @@
 .app-history{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.app-history-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px}.app-history-tabs{display:flex;gap:4px;background:#edf5fc;border-radius:999px;padding:3px}.app-history-tabs button{border:0;border-radius:999px;padding:6px 10px;background:transparent;color:var(--blue);font-size:11px;font-weight:800}.app-history-tabs button.active{background:var(--blue);color:white}.app-history-chart{min-height:96px;padding-top:7px}.app-history-chart svg{display:block;width:100%;height:auto;max-height:145px}.app-history-note{font-size:11px;color:var(--muted);margin:3px 0 0}
 </style>
 
-<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 70</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
+<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 71</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
 <main>
 <nav><button class="active" data-tab="inicio">Visão geral</button><button data-tab="lancamentos">Lançamentos</button><button data-tab="cadastros">Cadastros</button><button data-tab="relatorios">Relatórios</button><button data-tab="backup">Backup</button><button data-tab="seguranca">Segurança</button></nav>
 <section id="inicio">
@@ -232,10 +232,10 @@
 <p class="muted">Por segurança, o PIN não é incluído nos backups. Os backups guardam somente os dados financeiros.</p>
 </div></section>
 <section id="backup" class="hidden"><div class="panel"><h2>Backup e recuperação</h2><p>Faça um backup completo dos dados deste aparelho. O arquivo é salvo em formato JSON. No iPhone, ao tocar em <b>Exportar backup</b>, você poderá escolher onde guardar o arquivo, inclusive em <b>Arquivos</b> e, se disponível no aparelho, no <b>Google Drive</b>.</p><div id="backupInfo" class="notice"></div><div class="backup-actions"><button class="backup-action export" type="button" onclick="exportData()">📤 Exportar backup</button><button class="backup-action file" type="button" onclick="$('restoreFile').click()">📂 Restaurar backup de um arquivo</button><button class="backup-action auto" type="button" onclick="restoreAutoBackup()">♻️ Restaurar última cópia automática</button><button class="backup-action update" type="button" onclick="updateAppVersion()">🔄 Atualizar versão do aplicativo</button></div><input class="backup-file-input" type="file" id="restoreFile" accept=".json,application/json"><p class="muted backup-help">Para restaurar um arquivo, toque em <b>Restaurar backup de um arquivo</b> e escolha o backup .json salvo anteriormente. Antes da restauração, o aplicativo cria automaticamente uma cópia de segurança local dos dados atuais.</p><div class="notice" style="margin-top:10px"><strong>🔄 Atualização:</strong> ao tocar em Atualizar versão, o aplicativo cria uma cópia automática dos dados deste navegador e recarrega a página tentando buscar o arquivo mais recente publicado. Para maior segurança, exporte também um backup em arquivo antes de atualizar. O botão não permite manter versões antigas instaladas; ele recarrega a versão que estiver publicada no site.</div><div class="notice" style="margin-top:10px"><strong>🔐 Migração segura:</strong> versões futuras podem migrar os dados em etapas. Antes de uma migração de estrutura, o aplicativo cria uma cópia automática dos dados atuais.</div><div class="notice" style="margin-top:10px"><strong>📱 Atenção no iPhone:</strong> o acesso pelo ícone da Tela de Início e o acesso pelo Safari usam armazenamentos separados. Para levar os mesmos dados de um para o outro, use o backup.</div></div></section>
-<footer>Versão 70</footer>
+<footer>Versão 71</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=70;const SCHEMA=10;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=71;const SCHEMA=10;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
 // Compara nomes ignorando acentos, maiúsculas/minúsculas e espaços repetidos, sem alterar o texto salvo.
 function compareKey(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/\s+/g,' ').trim()}
@@ -1401,6 +1401,11 @@ function stopRecurringRule(virtualId,mode){
  }
  alert('Não foi possível identificar a opção de exclusão. Nenhuma alteração foi feita.');
 }
+function markRecurringOccurrenceHandled(t, scheduledDate){
+ if(!t || !scheduledDate || !Array.isArray(data.recurring))return;
+ const candidates=data.recurring.filter(r=>r.active!==false&&r.box===t.box&&r.type===t.type&&sameText(r.desc,t.desc));
+ candidates.forEach(r=>{if(!Array.isArray(r.skippedDates))r.skippedDates=[];if(!r.skippedDates.includes(scheduledDate))r.skippedDates.push(scheduledDate);});
+}
 function launchProjectedReceipt(virtualId){
  const t=projectedRecurringFromId(virtualId); if(!t||t.type!=='Receita')return;
  const v=prompt('Valor efetivamente recebido:',Number(t.value||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}));
@@ -1410,8 +1415,9 @@ function launchProjectedReceipt(virtualId){
  const accs=activeAccounts(t.box); if(!accs.length){alert('Cadastre uma conta bancária para registrar o recebimento.');return}
  const choice=prompt('Digite o número da conta onde entrou o dinheiro:\n'+accs.map((a,i)=>`${i+1} — ${a.name}`).join('\n'),'1'); const idx=Number(choice)-1; if(!Number.isInteger(idx)||!accs[idx])return;
  const methods=['Pix','Transferência','Dinheiro','Outro']; const methodChoice=prompt('Forma de recebimento:\n'+methods.map((m,i)=>`${i+1} — ${m}`).join('\n'),'1'); const method=methods[Number(methodChoice)-1]; if(!method)return;
+ markRecurringOccurrenceHandled(t,t.date);
  const id=crypto.randomUUID?crypto.randomUUID():String(Date.now());
- const rec={...t,id,date,value:amount,status:'Realizado',accountId:accs[idx].id,payment:method,virtualRecurring:false};
+ const rec={...t,id,date,value:amount,status:'Realizado',accountId:accs[idx].id,payment:method,virtualRecurring:false,recurring:'Não'};
  data.tx.push(rec); applyAccountDelta(rec.accountId,amount); persist();
 }
 function launchProjectedPayment(virtualId){
@@ -1423,8 +1429,9 @@ function launchProjectedPayment(virtualId){
  const accs=activeAccounts(t.box); if(!accs.length){alert('Cadastre uma conta bancária para registrar o pagamento.');return}
  const choice=prompt('Digite o número da conta de onde saiu o dinheiro:\n'+accs.map((a,i)=>`${i+1} — ${a.name}`).join('\n'),'1'); const idx=Number(choice)-1; if(!Number.isInteger(idx)||!accs[idx])return;
  const methods=['Pix','Débito','Dinheiro','Transferência','Outro']; const methodChoice=prompt('Forma de pagamento:\n'+methods.map((m,i)=>`${i+1} — ${m}`).join('\n'),'1'); const method=methods[Number(methodChoice)-1]; if(!method)return;
+ markRecurringOccurrenceHandled(t,t.date);
  const id=crypto.randomUUID?crypto.randomUUID():String(Date.now());
- const rec={...t,id,date,value:amount,status:'Realizado',accountId:accs[idx].id,payment:method,virtualRecurring:false};
+ const rec={...t,id,date,value:amount,status:'Realizado',accountId:accs[idx].id,payment:method,virtualRecurring:false,recurring:'Não'};
  data.tx.push(rec); applyAccountDelta(rec.accountId,-amount); persist();
 }
 function launchReceipt(id){
@@ -1441,6 +1448,8 @@ function launchReceipt(id){
  const methods=['Pix','Transferência','Dinheiro','Outro'];
  const methodChoice=prompt('Forma de recebimento:\n'+methods.map((m,i)=>`${i+1} — ${m}`).join('\n'),'1');
  const method=methods[Number(methodChoice)-1]; if(!method)return;
+ const scheduledDate=t.date;
+ if(t.recurring==='Sim')markRecurringOccurrenceHandled(t,scheduledDate);
  t.value=amount; t.date=date; t.status='Realizado'; t.accountId=accs[idx].id; t.payment=method;
  if(affectsAccount(t))applyAccountDelta(t.accountId,amount);
  persist();
@@ -1461,6 +1470,8 @@ function launchPayment(id){
  const methodChoice=prompt('Forma de pagamento:\n'+methods.map((m,i)=>`${i+1} — ${m}`).join('\n'),'1');
  const method=methods[Number(methodChoice)-1]; if(!method)return;
  const oldValue=Number(t.value||0);
+ const scheduledDate=t.date;
+ if(t.recurring==='Sim')markRecurringOccurrenceHandled(t,scheduledDate);
  t.value=amount; t.date=date; t.status='Realizado'; t.accountId=accs[idx].id; t.payment=method;
  if(t.cardId)t.cardId='';
  if(affectsAccount(t))applyAccountDelta(t.accountId,-amount);
