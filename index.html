@@ -73,7 +73,7 @@
 #inicio .summary3 .card:nth-child(3){background:#eef4f1;border-top:5px solid #59786b}
 #inicio .summary3 .card:nth-child(1) .amount{color:#14755a}#inicio .summary3 .card:nth-child(2) .amount{color:#bd2a20}
 </style>
-</head>
+<style>/* Versão 74: visual mais leve e compacto */:root{--green:#527568;--green2:#78998b;--mint:#edf3ef;--blue:#647f91;--bluebg:#eff3f5;--amber:#9b8054;--amberbg:#f7f3eb;--red:#a66e69;--redbg:#f8efee;--purple:#817895;--purplebg:#f3f1f6;--ink:#34413b;--muted:#7a8580;--line:#e4e9e5;--bg:#f7f8f6}body{font-size:14px;background:var(--bg)}header{background:linear-gradient(135deg,#526f63,#789487);padding:16px 15px 15px;border-radius:0 0 18px 18px}header h1{font-size:19px}main{padding:12px 12px 32px}nav{gap:5px}nav button,.btn{padding:9px 11px;border-radius:9px;font-size:13px}.panel,.filter,.card{border-radius:13px;box-shadow:none}.panel{padding:12px;margin:10px 0}.panel h2{font-size:15px}label{font-size:12px;margin:8px 0 4px}input,select,textarea{padding:10px 11px;border-radius:9px;font-size:14px}.card{padding:12px}.amount{font-size:19px}.item{padding:9px 0}.dashboard-panel{border:1px solid var(--line)!important;background:#fff!important;border-left:3px solid var(--green2)!important}.dashboard-panel .section-title h2{font-size:15px}.tx-entry{border-radius:10px;padding:9px 10px}.history-filter summary{font-size:15px;padding:12px 14px;background:#71877c;box-shadow:none}.history-filter{padding:8px;border-radius:10px}.history-filter-body{padding-top:5px}.summary3 .card{min-height:70px}.summary3 .amount{font-size:15px}</style></head>
 <body>
 <script>
 (function(){
@@ -109,7 +109,7 @@
 .app-history{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.app-history-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px}.app-history-tabs{display:flex;gap:4px;background:#edf5fc;border-radius:999px;padding:3px}.app-history-tabs button{border:0;border-radius:999px;padding:6px 10px;background:transparent;color:var(--blue);font-size:11px;font-weight:800}.app-history-tabs button.active{background:var(--blue);color:white}.app-history-chart{min-height:96px;padding-top:7px}.app-history-chart svg{display:block;width:100%;height:auto;max-height:145px}.app-history-note{font-size:11px;color:var(--muted);margin:3px 0 0}
 </style>
 
-<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 73</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
+<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 74</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
 <main>
 <nav><button class="active" data-tab="inicio">Visão geral</button><button data-tab="lancamentos">Lançamentos</button><button data-tab="cadastros">Cadastros</button><button data-tab="relatorios">Relatórios</button><button data-tab="backup">Backup</button><button data-tab="seguranca">Segurança</button></nav>
 <section id="inicio">
@@ -128,8 +128,8 @@
 <section id="lancamentos" class="hidden">
 <div class="panel"><h2>Novo lançamento</h2><div id="draftNotice" class="notice hidden"></div><form id="txForm">
 <label>Tipo</label><select id="type"><option>Despesa</option><option>Receita</option></select>
-<label>Descrição</label><input id="desc" required placeholder="Ex.: Supermercado, pensão...">
-<label>Empresa / Pessoa (opcional)</label><input id="party" placeholder="Ex.: Cliente, mercado, academia...">
+<label>Descrição</label><input id="desc" list="mcfDescriptionHistory" required placeholder="Ex.: Supermercado, pensão..."><datalist id="mcfDescriptionHistory"></datalist>
+<label>Empresa / Pessoa (opcional)</label><input id="party" list="mcfPartyHistory" placeholder="Ex.: Cliente, mercado, academia..."><datalist id="mcfPartyHistory"></datalist>
 <div class="row"><div><label>Valor (R$)</label><input id="value" type="text" required inputmode="decimal" autocomplete="off" placeholder="230 ou 230,30"></div><div><label>Data</label><input id="date" type="date" required></div></div>
 <div class="row"><div><label>Caixa selecionado</label><select id="box" disabled></select></div><div><label>Situação</label><select id="status"><option selected>Realizado</option><option>Previsto</option></select></div></div>
 <label>Categoria (opcional)</label>
@@ -143,7 +143,7 @@
 <label>Observação (opcional)</label><input id="note">
 <button class="btn primary" type="submit" id="saveTxBtn">Salvar lançamento</button><button class="btn hidden" type="button" id="cancelEditBtn">Cancelar edição</button><button class="btn hidden" type="button" id="clearDraftBtn">Descartar rascunho</button>
 </form></div>
-<div class="panel"><div class="section-title"><h2>Histórico — caixa selecionado</h2><span class="pill" id="historyBox"></span></div><details class="history-filter"><summary>🔎 Filtrar lançamentos</summary><div class="history-filter-body"><div class="row"><div><label>Data inicial</label><input id="historyStart" type="date"></div><div><label>Data final</label><input id="historyEnd" type="date"></div></div><div class="row"><div><label>Tipo</label><select id="historyType"><option value="Todos">Receitas e despesas</option><option value="Receita">Receitas</option><option value="Despesa">Despesas</option></select></div><div><label>Recorrência</label><select id="historyRecurring"><option value="Todos">Todas</option><option value="Sim">Recorrentes</option><option value="Não">Não recorrentes</option></select></div></div><div class="row"><div><label>Situação</label><select id="historyStatus"><option value="Todos">Previstas e realizadas</option><option value="Previsto">Somente previstas</option><option value="Realizado">Somente realizadas</option><option value="Cancelada">Canceladas</option></select></div><div></div></div><div class="row"><div><label>Categoria</label><select id="historyCategory"><option value="Todos">Todas as categorias</option></select></div><div><label>Empresa / Pessoa</label><select id="historyParty"><option value="Todos">Todas</option></select></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button class="btn primary" type="button" onclick="historyPage=1;renderHistory()">Aplicar filtros</button><button class="btn" type="button" onclick="clearHistoryFilters()">Limpar filtros</button></div></div></details><div id="historyCount" class="muted" style="margin:10px 0 5px"></div><div id="history"></div></div>
+<div class="panel"><div class="section-title"><h2>Histórico — caixa selecionado</h2><span class="pill" id="historyBox"></span></div><details class="history-filter"><summary>🔎 Filtrar lançamentos</summary><div class="history-filter-body"><div class="row"><div><label>Data inicial</label><input id="historyStart" type="date"></div><div><label>Data final</label><input id="historyEnd" type="date"></div></div><div class="row"><div><label>Tipo</label><select id="historyType"><option value="Todos">Receitas e despesas</option><option value="Receita">Receitas</option><option value="Despesa">Despesas</option></select></div><div><label>Recorrência</label><select id="historyRecurring"><option value="Todos">Todas</option><option value="Sim">Recorrentes</option><option value="Não">Não recorrentes</option></select></div></div><div class="row"><div><label>Situação</label><select id="historyStatus"><option value="Todos">Previstas e realizadas</option><option value="Previsto">Somente previstas</option><option value="Realizado">Somente realizadas</option><option value="Cancelada">Canceladas</option></select></div><div></div></div><label>Busca geral</label><input id="historySearch" type="search" placeholder="Categoria, empresa, descrição, cartão, conta ou pagamento..." autocomplete="off"><div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0"><button class="btn primary" type="button" onclick="historyPage=1;renderHistory()">Aplicar filtros</button><button class="btn" type="button" onclick="clearHistoryFilters()">Limpar filtros</button></div></div></details><div id="historyCount" class="muted" style="margin:10px 0 5px"></div><div id="history"></div></div>
 </section>
 <section id="cadastros" class="hidden">
 <div class="mcf-quick-cadastros" id="mcfQuickCadastros">
@@ -232,10 +232,10 @@
 <p class="muted">Por segurança, o PIN não é incluído nos backups. Os backups guardam somente os dados financeiros.</p>
 </div></section>
 <section id="backup" class="hidden"><div class="panel"><h2>Backup e recuperação</h2><p>Faça um backup completo dos dados deste aparelho. O arquivo é salvo em formato JSON. No iPhone, ao tocar em <b>Exportar backup</b>, você poderá escolher onde guardar o arquivo, inclusive em <b>Arquivos</b> e, se disponível no aparelho, no <b>Google Drive</b>.</p><div id="backupInfo" class="notice"></div><div class="backup-actions"><button class="backup-action export" type="button" onclick="exportData()">📤 Exportar backup</button><button class="backup-action file" type="button" onclick="$('restoreFile').click()">📂 Restaurar backup de um arquivo</button><button class="backup-action auto" type="button" onclick="restoreAutoBackup()">♻️ Restaurar última cópia automática</button><button class="backup-action update" type="button" onclick="updateAppVersion()">🔄 Atualizar versão do aplicativo</button></div><input class="backup-file-input" type="file" id="restoreFile" accept=".json,application/json"><p class="muted backup-help">Para restaurar um arquivo, toque em <b>Restaurar backup de um arquivo</b> e escolha o backup .json salvo anteriormente. Antes da restauração, o aplicativo cria automaticamente uma cópia de segurança local dos dados atuais.</p><div class="notice" style="margin-top:10px"><strong>🔄 Atualização:</strong> ao tocar em Atualizar versão, o aplicativo cria uma cópia automática dos dados deste navegador e recarrega a página tentando buscar o arquivo mais recente publicado. Para maior segurança, exporte também um backup em arquivo antes de atualizar. O botão não permite manter versões antigas instaladas; ele recarrega a versão que estiver publicada no site.</div><div class="notice" style="margin-top:10px"><strong>🔐 Migração segura:</strong> versões futuras podem migrar os dados em etapas. Antes de uma migração de estrutura, o aplicativo cria uma cópia automática dos dados atuais.</div><div class="notice" style="margin-top:10px"><strong>📱 Atenção no iPhone:</strong> o acesso pelo ícone da Tela de Início e o acesso pelo Safari usam armazenamentos separados. Para levar os mesmos dados de um para o outro, use o backup.</div></div></section>
-<footer>Versão 73</footer>
+<footer>Versão 74</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=72;const SCHEMA=10;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=74;const SCHEMA=11;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
 // Compara nomes ignorando acentos, maiúsculas/minúsculas e espaços repetidos, sem alterar o texto salvo.
 function compareKey(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/\s+/g,' ').trim()}
@@ -254,6 +254,7 @@ function migrateData(raw){
   if(from<5){d.tx=d.tx.map(t=>({...t,party:String(t?.party||t?.store||t?.loja||'')}));d.installments=d.installments.map(p=>({...p,status:'Previsto'}));}
   if(from<6){d.accounts=d.accounts.map(a=>({...a,balance:Math.round((Number(a.balance)||0)*100)/100}));}
   if(from<9){d.accounts=d.accounts.map(a=>{const x={...a};delete x.balanceUpdatedAt;return x});d.applications=d.applications.map(a=>{const x={...a};delete x.balanceUpdatedAt;return x});}
+  if(from<11){d.tx=d.tx.map(t=>({...t,category:sameText(t.category,'Alimentação')?'Restaurantes e refeições':t.category}));d.recurring=d.recurring.map(r=>({...r,category:sameText(r.category,'Alimentação')?'Restaurantes e refeições':r.category}));d.categories=d.categories.filter(c=>!sameText(c?.name||c,'Alimentação'));if(!d.categories.some(c=>sameText(c?.name||c,'Restaurantes e refeições')&&c?.type==='Despesa'))d.categories.push({name:'Restaurantes e refeições',type:'Despesa'});}
   d.boxes=[...new Set(d.boxes.map(b=>String(b||'').trim()).filter(Boolean).map(b=>b==='Meu Financeiro'?'Pessoal':b))];
   d._schemaVersion=SCHEMA; return d;
 }
@@ -602,7 +603,6 @@ function affectsAccount(t){return t && t.status==='Realizado' && t.accountId && 
 const expenseCategories = [
   'Moradia',
   'Supermercado',
-  'Alimentação',
   'Padaria',
   'Açougue',
   'Sacolão',
@@ -904,6 +904,7 @@ function showMonthBreakdown(type){
  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 function render(){
+const dl=$('mcfDescriptionHistory'),pl=$('mcfPartyHistory');if(dl)dl.innerHTML=uniqueTextValues(data.tx.map(t=>t.desc)).map(v=>`<option value="${esc(v)}"></option>`).join('');if(pl)pl.innerHTML=uniqueTextValues(data.tx.map(t=>partyName(t))).map(v=>`<option value="${esc(v)}"></option>`).join('');
 repairDeletedSupermarketOccurrences();
 renderCategorySuggestions();
 if($('reportBox')){const sel=currentBox();$('reportBox').innerHTML=`<option value="${esc(sel)}">${esc(sel)}</option>`;$('reportBox').value=sel;$('reportBox').disabled=true;reportOptions();renderReports();}
@@ -974,16 +975,16 @@ $('boxesList').innerHTML=data.boxes.map((b,i)=>`<div class="item"><span><strong>
 function historyOptions(){
  const box=currentBox(),tx=data.tx.filter(t=>t.box===box);
  const fill=(id,values,allLabel)=>{const el=$(id);if(!el)return;const old=el.value||'Todos';el.innerHTML=`<option value="Todos">${allLabel}</option>`+uniqueTextValues(values).sort((a,b)=>a.localeCompare(b,'pt-BR')).map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join('');if([...el.options].some(o=>sameText(o.value,old)))el.value=[...el.options].find(o=>sameText(o.value,old))?.value||'Todos';};
- fill('historyCategory',tx.map(t=>t.category),'Todas as categorias');fill('historyParty',tx.map(partyName),'Todas');
+
 }
 let historyPage=1;const HISTORY_PAGE_SIZE=20;
 function renderHistory(){
- historyOptions();const box=currentBox(),start=$('historyStart')?.value||'',end=$('historyEnd')?.value||'',type=$('historyType')?.value||'Todos',recurring=$('historyRecurring')?.value||'Todos',status=$('historyStatus')?.value||'Todos',cat=$('historyCategory')?.value||'Todos',party=$('historyParty')?.value||'Todos';
- const matches=t=>(type==='Todos'||t.type===type)&&(status==='Todos'||t.status===status)&&(cat==='Todos'||sameText(t.category||'',cat))&&(party==='Todos'||sameText(partyName(t),party));
+ const box=currentBox(),start=$('historyStart')?.value||'',end=$('historyEnd')?.value||'',type=$('historyType')?.value||'Todos',recurring=$('historyRecurring')?.value||'Todos',status=$('historyStatus')?.value||'Todos',search=compareKey($('historySearch')?.value||'');
+ const matches=t=>{if((type!=='Todos'&&t.type!==type)||(status!=='Todos'&&t.status!==status))return false;if(!search)return true;const card=cardById(t.cardId),account=data.accounts.find(a=>a.id===t.accountId);return [t.category,partyName(t),t.desc,t.card,card?.name,t.account,account?.name,account?.bank,t.payment,t.note].map(compareKey).join(' ').includes(search)};
  const actual=data.tx.filter(t=>t.box===box).filter(t=>!start||String(t.date||'')>=start).filter(t=>!end||String(t.date||'')<=end).filter(t=>recurring==='Todos'||(recurring==='Sim'?t.recurring==='Sim':t.recurring!=='Sim')).filter(matches);
  let projected=[];if(recurring==='Sim'||recurring==='Todos'){const todayKey=today();const projectionStart=start&&start>todayKey?start:todayKey;const projectionEnd=end||addMonthsDate(todayKey,6);if(projectionStart<=projectionEnd)projected=recurringProjectedTx(box,projectionStart,projectionEnd).filter(t=>matches(t)&&(!start||t.date>=start)&&(!end||t.date<=end));}
  const rows=[...actual,...projected].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
- const filtered=!!(start||end||type!=='Todos'||recurring!=='Todos'||status!=='Todos'||cat!=='Todos'||party!=='Todos');
+ const filtered=!!(start||end||type!=='Todos'||recurring!=='Todos'||status!=='Todos'||search);
  const totalPages=filtered?1:Math.max(1,Math.ceil(rows.length/HISTORY_PAGE_SIZE));if(historyPage>totalPages)historyPage=totalPages;if(historyPage<1)historyPage=1;
  const visibleRows=filtered?rows:rows.slice((historyPage-1)*HISTORY_PAGE_SIZE,historyPage*HISTORY_PAGE_SIZE);
  $('historyCount').textContent=(recurring==='Sim'?`${actual.length} lançamento${actual.length===1?'':'s'} do histórico e ${projected.length} próxima${projected.length===1?'':'s'} ocorrência${projected.length===1?'':'s'} prevista${projected.length===1?'':'s'}`:`${rows.length} lançamento${rows.length===1?'':'s'} encontrado${rows.length===1?'':'s'}`)+(filtered?' · filtro aplicado':` · página ${historyPage} de ${totalPages}`);
@@ -991,7 +992,7 @@ function renderHistory(){
  let pager=$('historyPagination');if(!pager){pager=document.createElement('div');pager.id='historyPagination';pager.className='history-pagination';$('history').after(pager)}
  if(filtered||totalPages<=1){pager.innerHTML='';pager.classList.add('hidden')}else{pager.classList.remove('hidden');pager.innerHTML=`<button type="button" ${historyPage===1?'disabled':''} onclick="historyPage=1;renderHistory()">« Primeira</button><button type="button" ${historyPage===1?'disabled':''} onclick="historyPage--;renderHistory()">‹ Anterior</button><span class="current">Página ${historyPage} de ${totalPages}</span><button type="button" ${historyPage===totalPages?'disabled':''} onclick="historyPage++;renderHistory()">Próxima ›</button><button type="button" ${historyPage===totalPages?'disabled':''} onclick="historyPage=${totalPages};renderHistory()">Última »</button>`}
 }
-function clearHistoryFilters(){['historyStart','historyEnd'].forEach(id=>$(id).value='');['historyType','historyRecurring','historyStatus','historyCategory','historyParty'].forEach(id=>$(id).value='Todos');historyPage=1;historyOptions();renderHistory();}
+function clearHistoryFilters(){['historyStart','historyEnd','historySearch'].forEach(id=>$(id).value='');['historyType','historyRecurring','historyStatus'].forEach(id=>$(id).value='Todos');historyPage=1;renderHistory();}
 function txHTML(t){
  const recurringButtons=(id)=>`<div class="tx-entry-actions" onclick="event.stopPropagation()"><button class="btn" onclick="editRecurringOccurrence('${id}','one')">Editar somente esta ocorrência</button><button class="btn" onclick="editRecurringOccurrence('${id}','all')">Editar todas as ocorrências</button><button class="btn danger" onclick="stopRecurringRule('${id}','one')">Excluir somente esta ocorrência</button><button class="btn danger" onclick="stopRecurringRule('${id}','future')">Excluir todas as recorrências</button></div>`;
  if(t.virtualRecurring){return `<div class="tx-entry" onclick="this.classList.toggle('expanded')" style="border:1px dashed #9ac9b8;background:#f5fbf8"><div class="tx-entry-main"><div class="tx-entry-info"><strong>${esc(t.desc)}</strong><div class="muted tx-entry-meta">${mcfBRDate(t.date)} · Previsto · 🔄 Recorrência futura${t.payment?' · '+esc(t.payment):''}${partyName(t)?' · '+esc(partyName(t)):''}${t.category?' · '+esc(t.category):''}${(t.accountId||t.account)?' · 🏦 '+esc(accountName(t.accountId)||t.account):''}</div></div><strong class="tx-entry-amount ${signed(t)>=0?'positive':'negative'}">${money(signed(t))}</strong></div>${recurringButtons(t.id)}</div>`}
@@ -1021,7 +1022,7 @@ function updateTypeUI(){
 }
 $('type').onchange=()=>{ const income=$('type').value==='Receita'; $('status').value=income?'Previsto':'Realizado'; updateTypeUI(); };
 $('status').onchange=()=>updateTypeUI();
-$('dashBox').onchange=()=>{localStorage.setItem(LAST,$('dashBox').value);render()};
+$('dashBox').onchange=()=>{localStorage.setItem(LAST,$('dashBox').value);render()};if($('historySearch'))$('historySearch').addEventListener('input',()=>{historyPage=1;renderHistory()});
 $('value').addEventListener('blur',formatInput);
 $('payment').onchange=()=>{let p=$('payment').value;$('accountWrap').style.display=(p==='Dinheiro'||p==='Cartão de crédito')?'none':'block';$('cardWrap').classList.toggle('hidden',p!=='Cartão de crédito'||$('type').value==='Receita');if(p==='Dinheiro'||p==='Cartão de crédito')$('accountSelect').value='';renderCards();previewInstallments();};$('installmentType').onchange=()=>{$('installmentWrap').classList.toggle('hidden',$('installmentType').value!=='Parcelada');previewParcels()};$('installments').oninput=previewParcels;$('recurring').onchange=()=>$('recurringWrap').classList.toggle('hidden',$('recurring').value!=='Sim');
 function previewParcels(){let n=parseInt($('installments').value||0),v=parseBR($('value').value);if(n>=2&&Number.isFinite(v))$('parcelPreview').innerHTML=`<p>Prévia: ${n} parcelas de aproximadamente <strong>${money(v/n)}</strong>. A distribuição exata por fatura será integrada no módulo de cartões.</p>`;else $('parcelPreview').innerHTML=''}
