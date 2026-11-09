@@ -115,7 +115,7 @@ body{font-size:14px;background:var(--bg);line-height:1.45}header{background:line
 .app-history{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.app-history-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px}.app-history-tabs{display:flex;gap:4px;background:#edf5fc;border-radius:999px;padding:3px}.app-history-tabs button{border:0;border-radius:999px;padding:6px 10px;background:transparent;color:var(--blue);font-size:11px;font-weight:800}.app-history-tabs button.active{background:var(--blue);color:white}.app-history-chart{min-height:96px;padding-top:7px}.app-history-chart svg{display:block;width:100%;height:auto;max-height:145px}.app-history-note{font-size:11px;color:var(--muted);margin:3px 0 0}
 </style>
 
-<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1><span>Versão 77</span></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
+<header><div class="mcf-header-title"><div><h1>Meu Controle Financeiro</h1></div><button class="header-lock" type="button" onclick="logoutApp()" aria-label="Bloquear aplicativo">🔒 Bloquear</button></div><p>Seu dinheiro, organizado do seu jeito.</p></header>
 <main>
 <nav><button class="active" data-tab="inicio">Visão geral</button><button data-tab="lancamentos">Lançamentos</button><button data-tab="cadastros">Cadastros</button><button data-tab="relatorios">Relatórios</button><button data-tab="backup">Backup</button><button data-tab="seguranca">Segurança</button></nav>
 <section id="inicio">
@@ -237,10 +237,10 @@ body{font-size:14px;background:var(--bg);line-height:1.45}header{background:line
 <p class="muted">Por segurança, o PIN não é incluído nos backups. Os backups guardam somente os dados financeiros.</p>
 </div></section>
 <section id="backup" class="hidden"><div class="panel"><h2>Backup e recuperação</h2><p>Faça um backup completo dos dados deste aparelho. O arquivo é salvo em formato JSON. No iPhone, ao tocar em <b>Exportar backup</b>, você poderá escolher onde guardar o arquivo, inclusive em <b>Arquivos</b> e, se disponível no aparelho, no <b>Google Drive</b>.</p><div id="backupInfo" class="notice"></div><div class="backup-actions"><button class="backup-action export" type="button" onclick="exportData()">📤 Exportar backup</button><button class="backup-action file" type="button" onclick="$('restoreFile').click()">📂 Restaurar backup de um arquivo</button><button class="backup-action auto" type="button" onclick="restoreAutoBackup()">♻️ Restaurar última cópia automática</button><button class="backup-action update" type="button" onclick="updateAppVersion()">🔄 Atualizar versão do aplicativo</button></div><input class="backup-file-input" type="file" id="restoreFile" accept=".json,application/json"><p class="muted backup-help">Para restaurar um arquivo, toque em <b>Restaurar backup de um arquivo</b> e escolha o backup .json salvo anteriormente. Antes da restauração, o aplicativo cria automaticamente uma cópia de segurança local dos dados atuais.</p><div class="notice" style="margin-top:10px"><strong>🔄 Atualização:</strong> ao tocar em Atualizar versão, o aplicativo cria uma cópia automática dos dados deste navegador e recarrega a página tentando buscar o arquivo mais recente publicado. Para maior segurança, exporte também um backup em arquivo antes de atualizar. O botão não permite manter versões antigas instaladas; ele recarrega a versão que estiver publicada no site.</div><div class="notice" style="margin-top:10px"><strong>🔐 Migração segura:</strong> versões futuras podem migrar os dados em etapas. Antes de uma migração de estrutura, o aplicativo cria uma cópia automática dos dados atuais.</div><div class="notice" style="margin-top:10px"><strong>📱 Atenção no iPhone:</strong> o acesso pelo ícone da Tela de Início e o acesso pelo Safari usam armazenamentos separados. Para levar os mesmos dados de um para o outro, use o backup.</div></div></section>
-<footer>Versão 78</footer>
+<footer>Versão 79</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=78;const SCHEMA=11;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=79;const SCHEMA=11;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
 // Compara nomes ignorando acentos, maiúsculas/minúsculas e espaços repetidos, sem alterar o texto salvo.
 function compareKey(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/\s+/g,' ').trim()}
@@ -823,8 +823,17 @@ function recurringProjectedTx(box,start,end){
       if(String(d)<today())return;
       if(start&&d<start)return;
       if(end&&d>end)return;
-      const alreadyRecorded=data.tx.some(t=>t.box===r.box&&t.type===r.type&&t.date===d&&String(t.desc||'').trim().toLocaleLowerCase()===String(r.desc||'').trim().toLocaleLowerCase());
+      const sameRecurringItem=t=>t.box===r.box&&t.type===r.type&&sameText(t.desc||'',r.desc||'')&&t.recurring==='Sim';
+      const alreadyRecorded=data.tx.some(t=>t.box===r.box&&t.type===r.type&&t.date===d&&sameText(t.desc||'',r.desc||''));
       if(alreadyRecorded)return;
+      // Se uma ocorrência recorrente foi realizada antecipadamente e sua data foi alterada,
+      // vincula essa realização à primeira data programada posterior, evitando duplicá-la como previsão.
+      const completedEarlier=(data.tx||[]).some(t=>{
+        if(!sameRecurringItem(t)||t.status!=='Realizado'||!t.date||t.date>=d)return false;
+        const scheduled=recurringDates(r.startDate,d,r.frequency).filter(x=>x!==r.startDate&&x>t.date);
+        return scheduled.length>0&&scheduled[0]===d;
+      });
+      if(completedEarlier)return;
       out.push({id:'virtual_'+r.id+'_'+d,box:r.box,type:r.type,desc:r.desc,value:Number(r.value||0),date:d,status:'Previsto',category:r.category||'',payment:r.payment||'',accountId:r.accountId||'',cardId:r.cardId||'',recurring:'Sim',frequency:r.frequency,party:r.party||r.store||r.loja||'',virtualRecurring:true});
     });
   });
@@ -986,14 +995,9 @@ function renderDueMonth(){const items=monthlyDashboardItems(selected,selectedDue
 buildMonthTabs('incomeMonthTabs',selectedIncomeMonth);buildMonthTabs('dueMonthTabs',selectedDueMonth);document.querySelectorAll('#incomeMonthTabs .month-tab').forEach(b=>b.onclick=()=>{selectedIncomeMonth=b.dataset.month;document.querySelectorAll('#incomeMonthTabs .month-tab').forEach(x=>x.classList.toggle('active',x===b));renderIncomeMonth()});document.querySelectorAll('#dueMonthTabs .month-tab').forEach(b=>b.onclick=()=>{selectedDueMonth=b.dataset.month;document.querySelectorAll('#dueMonthTabs .month-tab').forEach(x=>x.classList.toggle('active',x===b));renderDueMonth()});renderIncomeMonth();renderDueMonth();
 let categoryMode=window.categoryMode||'realizadas';let categoryMonth=window.categoryMonth||month;const catMonths=monthKeysFromCurrent(6);if(!catMonths.includes(categoryMonth))categoryMonth=catMonths[0];window.categoryMonth=categoryMonth;const catTabs=$('catMonthTabs');if(catTabs){catTabs.innerHTML=catMonths.map(m=>`<button type="button" class="month-tab ${m===categoryMonth?'active':''}" data-month="${m}">${esc(monthNameShort(m))}</button>`).join('');catTabs.querySelectorAll('.month-tab').forEach(b=>b.onclick=()=>{window.categoryMonth=b.dataset.month;render()})}document.querySelectorAll('.cat-mode').forEach(b=>{b.classList.toggle('active',b.dataset.mode===categoryMode);b.onclick=()=>{window.categoryMode=b.dataset.mode;render()}});let catBase=[];
 if(categoryMode==='realizadas'){
- catBase=data.tx.filter(t=>t.box===selected&&t.date?.startsWith(categoryMonth)&&t.type==='Despesa'&&t.status==='Realizado'&&t.payment!=='Cartão de crédito');
- // Compras de cartão realizadas são distribuídas pela fatura, não pelo mês da compra.
- const realizedCardPurchases=data.tx.filter(t=>t.box===selected&&t.type==='Despesa'&&t.status==='Realizado'&&t.payment==='Cartão de crédito');
- realizedCardPurchases.forEach(t=>{
-  const parts=(data.installments||[]).filter(p=>p.purchaseId===t.id&&p.month===categoryMonth&&p.status!=='Cancelada');
-  if(parts.length)parts.forEach(p=>catBase.push({...t,id:'catpart_'+p.id,value:Number(p.value||0),date:p.date||t.date,category:t.category||'Outros gastos'}));
-  else {const card=cardById(t.cardId);if(card&&invoiceMonth(card,t.date)===categoryMonth)catBase.push(t);}
- });
+ // O gráfico de despesas realizadas respeita a data efetiva do lançamento,
+ // mesmo quando a compra foi feita no cartão e a fatura vence em outro mês.
+ catBase=data.tx.filter(t=>t.box===selected&&t.date?.startsWith(categoryMonth)&&t.type==='Despesa'&&t.status==='Realizado');
 }else{
  catBase=monthlyDashboardItems(selected,categoryMonth,'Despesa').filter(t=>t.type==='Despesa'&&t.payment!=='Cartão de crédito');
  // Cada parcela entra no mês da fatura correspondente e herda a categoria da compra original.
