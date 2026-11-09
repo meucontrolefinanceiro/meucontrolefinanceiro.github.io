@@ -237,10 +237,10 @@ body{font-size:14px;background:var(--bg);line-height:1.45}header{background:line
 <p class="muted">Por segurança, o PIN não é incluído nos backups. Os backups guardam somente os dados financeiros.</p>
 </div></section>
 <section id="backup" class="hidden"><div class="panel"><h2>Backup e recuperação</h2><p>Faça um backup completo dos dados deste aparelho. O arquivo é salvo em formato JSON. No iPhone, ao tocar em <b>Exportar backup</b>, você poderá escolher onde guardar o arquivo, inclusive em <b>Arquivos</b> e, se disponível no aparelho, no <b>Google Drive</b>.</p><div id="backupInfo" class="notice"></div><div class="backup-actions"><button class="backup-action export" type="button" onclick="exportData()">📤 Exportar backup</button><button class="backup-action file" type="button" onclick="$('restoreFile').click()">📂 Restaurar backup de um arquivo</button><button class="backup-action auto" type="button" onclick="restoreAutoBackup()">♻️ Restaurar última cópia automática</button><button class="backup-action update" type="button" onclick="updateAppVersion()">🔄 Atualizar versão do aplicativo</button></div><input class="backup-file-input" type="file" id="restoreFile" accept=".json,application/json"><p class="muted backup-help">Para restaurar um arquivo, toque em <b>Restaurar backup de um arquivo</b> e escolha o backup .json salvo anteriormente. Antes da restauração, o aplicativo cria automaticamente uma cópia de segurança local dos dados atuais.</p><div class="notice" style="margin-top:10px"><strong>🔄 Atualização:</strong> ao tocar em Atualizar versão, o aplicativo cria uma cópia automática dos dados deste navegador e recarrega a página tentando buscar o arquivo mais recente publicado. Para maior segurança, exporte também um backup em arquivo antes de atualizar. O botão não permite manter versões antigas instaladas; ele recarrega a versão que estiver publicada no site.</div><div class="notice" style="margin-top:10px"><strong>🔐 Migração segura:</strong> versões futuras podem migrar os dados em etapas. Antes de uma migração de estrutura, o aplicativo cria uma cópia automática dos dados atuais.</div><div class="notice" style="margin-top:10px"><strong>📱 Atenção no iPhone:</strong> o acesso pelo ícone da Tela de Início e o acesso pelo Safari usam armazenamentos separados. Para levar os mesmos dados de um para o outro, use o backup.</div></div></section>
-<footer>Versão 79</footer>
+<footer>Versão 80</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=79;const SCHEMA=11;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=80;const SCHEMA=11;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
 // Compara nomes ignorando acentos, maiúsculas/minúsculas e espaços repetidos, sem alterar o texto salvo.
 function compareKey(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/\s+/g,' ').trim()}
@@ -1003,7 +1003,9 @@ if(categoryMode==='realizadas'){
  // Cada parcela entra no mês da fatura correspondente e herda a categoria da compra original.
  (data.installments||[]).filter(p=>p.month===categoryMonth&&p.status!=='Cancelada'&&p.status!=='Pago'&&!((data.invoices||[]).some(inv=>inv.cardId===p.cardId&&inv.month===categoryMonth&&inv.paid))).forEach(p=>{
   const purchase=data.tx.find(t=>t.id===p.purchaseId);
-  if(!purchase||purchase.box!==selected||purchase.type!=='Despesa'||purchase.status==='Cancelada'||purchase.payment!=='Cartão de crédito')return;
+  // Compra já realizada pertence ao gráfico do mês da compra, não ao de despesas previstas.
+  // A obrigação da fatura continua preservada nos painéis de cartões e na projeção financeira.
+  if(!purchase||purchase.box!==selected||purchase.type!=='Despesa'||purchase.status!=='Previsto'||purchase.payment!=='Cartão de crédito')return;
   catBase.push({...purchase,id:'catpart_'+p.id,value:Number(p.value||0),date:p.date||purchase.date,status:'Previsto',category:purchase.category||'Outros gastos',payment:'Cartão de crédito'});
  });
  // Recorrências de cartão ainda não possuem parcelas persistidas; respeita o mês da fatura.
