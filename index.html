@@ -237,10 +237,10 @@ body{font-size:14px;background:var(--bg);line-height:1.45}header{background:line
 <p class="muted">Por segurança, o PIN não é incluído nos backups. Os backups guardam somente os dados financeiros.</p>
 </div></section>
 <section id="backup" class="hidden"><div class="panel"><h2>Backup e recuperação</h2><p>Faça um backup completo dos dados deste aparelho. O arquivo é salvo em formato JSON. No iPhone, ao tocar em <b>Exportar backup</b>, você poderá escolher onde guardar o arquivo, inclusive em <b>Arquivos</b> e, se disponível no aparelho, no <b>Google Drive</b>.</p><div id="backupInfo" class="notice"></div><div class="backup-actions"><button class="backup-action export" type="button" onclick="exportData()">📤 Exportar backup</button><button class="backup-action file" type="button" onclick="$('restoreFile').click()">📂 Restaurar backup de um arquivo</button><button class="backup-action auto" type="button" onclick="restoreAutoBackup()">♻️ Restaurar última cópia automática</button><button class="backup-action update" type="button" onclick="updateAppVersion()">🔄 Atualizar versão do aplicativo</button></div><input class="backup-file-input" type="file" id="restoreFile" accept=".json,application/json"><p class="muted backup-help">Para restaurar um arquivo, toque em <b>Restaurar backup de um arquivo</b> e escolha o backup .json salvo anteriormente. Antes da restauração, o aplicativo cria automaticamente uma cópia de segurança local dos dados atuais.</p><div class="notice" style="margin-top:10px"><strong>🔄 Atualização:</strong> ao tocar em Atualizar versão, o aplicativo cria uma cópia automática dos dados deste navegador e recarrega a página tentando buscar o arquivo mais recente publicado. Para maior segurança, exporte também um backup em arquivo antes de atualizar. O botão não permite manter versões antigas instaladas; ele recarrega a versão que estiver publicada no site.</div><div class="notice" style="margin-top:10px"><strong>🔐 Migração segura:</strong> versões futuras podem migrar os dados em etapas. Antes de uma migração de estrutura, o aplicativo cria uma cópia automática dos dados atuais.</div><div class="notice" style="margin-top:10px"><strong>📱 Atenção no iPhone:</strong> o acesso pelo ícone da Tela de Início e o acesso pelo Safari usam armazenamentos separados. Para levar os mesmos dados de um para o outro, use o backup.</div></div></section>
-<footer>Versão 80</footer>
+<footer>Versão 82</footer>
 </main>
 <script>
-const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=80;const SCHEMA=11;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
+const KEY='mcf_data_v2';const LAST='mcf_last_box';const DRAFT='mcf_tx_draft_v1';const SEC='mcf_security_v1';const LOCK='mcf_lock_timeout';const SECSESSION='mcf_security_session_lock';const AUTO='mcf_autobackup_v1';const APP_VERSION=82;const SCHEMA=12;const DEFAULT_BOXES=[];let data={boxes:[],tx:[]};let editingId=null;let dataLoadWarning='';
 function cloneData(v){return JSON.parse(JSON.stringify(v))}
 // Compara nomes ignorando acentos, maiúsculas/minúsculas e espaços repetidos, sem alterar o texto salvo.
 function compareKey(value){return String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/\s+/g,' ').trim()}
@@ -270,6 +270,13 @@ function migrateData(raw){
   if(from<SCHEMA){try{localStorage.setItem(AUTO,JSON.stringify({app:'Meu Controle Financeiro',version:APP_VERSION,reason:'backup antes da migração '+from+'→'+SCHEMA,createdAt:new Date().toISOString(),data:before}))}catch(e){}}
   data=normalizeData(migrateData(parsed)); if(from<SCHEMA)try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}
  }catch(e){data=normalizeData({});dataLoadWarning='Os dados salvos não puderam ser lidos. O aplicativo não substituiu o arquivo original. Verifique a área de Backup antes de continuar.'}
+})();
+(function linkLegacyRecurringTransactions(){
+ (data.tx||[]).forEach(t=>{
+   if(t.recurrenceId||t.recurring!=='Sim')return;
+   const matches=(data.recurring||[]).filter(r=>r.active!==false&&r.box===t.box&&r.type===t.type&&r.startDate===t.date&&sameText(r.desc,t.desc));
+   if(matches.length===1)t.recurrenceId=matches[0].id;
+ });
 })();
 let security={enabled:false,hash:''};let lockTimeout=Number(localStorage.getItem(LOCK)||15);let locked=false;let lastActivity=Number(localStorage.getItem('mcf_security_last_activity')||Date.now());
 try{const z=localStorage.getItem(SEC);if(z)security=JSON.parse(z)}catch(e){}
@@ -829,12 +836,15 @@ function recurringProjectedTx(box,start,end){
       // Se uma ocorrência recorrente foi realizada antecipadamente e sua data foi alterada,
       // vincula essa realização à primeira data programada posterior, evitando duplicá-la como previsão.
       const completedEarlier=(data.tx||[]).some(t=>{
-        if(!sameRecurringItem(t)||t.status!=='Realizado'||!t.date||t.date>=d)return false;
+        if(t.status!=='Realizado'||!t.date||t.box!==r.box||t.type!==r.type||!sameText(t.desc||'',r.desc||''))return false;
+        if(r.frequency==='Mensal'&&String(t.date).slice(0,7)===String(d).slice(0,7))return true;
+        if(!sameRecurringItem(t))return false;
+        if(t.date>=d)return false;
         const scheduled=recurringDates(r.startDate,d,r.frequency).filter(x=>x!==r.startDate&&x>t.date);
         return scheduled.length>0&&scheduled[0]===d;
       });
       if(completedEarlier)return;
-      out.push({id:'virtual_'+r.id+'_'+d,box:r.box,type:r.type,desc:r.desc,value:Number(r.value||0),date:d,status:'Previsto',category:r.category||'',payment:r.payment||'',accountId:r.accountId||'',cardId:r.cardId||'',recurring:'Sim',frequency:r.frequency,party:r.party||r.store||r.loja||'',virtualRecurring:true});
+      out.push({id:'virtual_'+r.id+'_'+d,box:r.box,type:r.type,desc:r.desc,value:Number(r.value||0),date:d,status:'Previsto',category:r.category||'',payment:r.payment||'',accountId:r.accountId||'',cardId:r.cardId||'',recurring:'Sim',recurrenceId:r.id,frequency:r.frequency,party:r.party||r.store||r.loja||'',virtualRecurring:true});
     });
   });
   return out;
@@ -1097,18 +1107,19 @@ if(editingId){
   let recurrenceRecord=null;
   let recurrenceChoice='1';
   if(old.recurring==='Sim'){
-    recurrenceRecord=(data.recurring||[]).find(r=>r.active!==false&&r.box===old.box&&r.type===old.type&&sameText(r.desc,old.desc)&&sameText(r.party||'',partyName(old)||''))
-      ||(data.recurring||[]).find(r=>r.active!==false&&r.box===old.box&&r.type===old.type&&sameText(r.desc,old.desc));
+    recurrenceRecord=(old.recurrenceId&&(data.recurring||[]).find(r=>r.id===old.recurrenceId&&r.active!==false))
+      ||(data.recurring||[]).find(r=>r.active!==false&&r.box===old.box&&r.type===old.type&&r.startDate===old.date&&sameText(r.desc,old.desc)&&sameText(r.party||'',partyName(old)||''));
     if(recurrenceRecord){
       recurrenceChoice=confirm('Este lançamento está ligado a uma recorrência.\n\nOK: atualizar somente as próximas ocorrências, preservando o histórico já realizado.\nCancelar: alterar somente este lançamento, sem mudar a recorrência futura.')?'2':'1';
     }
   }
 
-  const updateFutureOnly=!!(recurrenceRecord&&recurrenceChoice==='2'&&old.status==='Realizado');
-  if(updateFutureOnly){
-    // Atualiza a regra da recorrência, sem tocar no lançamento realizado que serviu de referência.
+  const updateAllFuture=!!(recurrenceRecord&&recurrenceChoice==='2');
+  if(updateAllFuture){
+    // Atualiza a regra sem mudar sua âncora, seu identificador ou as datas já programadas.
+    const originalBox=old.box, originalType=old.type, originalDesc=old.desc, anchorDate=recurrenceRecord.startDate;
     Object.assign(recurrenceRecord,{
-      box:old.box,
+      box:originalBox,
       type:rec.type,
       desc:rec.desc,
       party:rec.party||'',
@@ -1119,8 +1130,46 @@ if(editingId){
       cardId:rec.cardId||'',
       frequency:rec.frequency,
       endDate:rec.endDate||'',
+      startDate:anchorDate,
       active:true
     });
+    // Atualiza TODAS as ocorrências futuras já materializadas, sem tocar no histórico realizado.
+    const futureRows=data.tx.filter(t=>
+      t.box===originalBox&&t.type===originalType&&
+      (t.recurrenceId===recurrenceRecord.id||
+       (!t.recurrenceId&&t.recurring==='Sim'&&sameText(t.desc||'',originalDesc||'')&&
+        !(data.recurring||[]).some(other=>other.id!==recurrenceRecord.id&&other.active!==false&&other.box===t.box&&other.type===t.type&&sameText(other.desc||'',t.desc||''))))&&
+      t.status==='Previsto'&&String(t.date||'')>=String(old.date||'')
+    );
+    futureRows.forEach(row=>{
+      invalidateInvoiceOverridesForTx(row);
+      data.installments=data.installments.filter(p=>p.purchaseId!==row.id);
+      const keepDate=row.date, keepId=row.id, keepCreatedAt=row.createdAt;
+      Object.assign(row,rec,{date:keepDate,id:keepId,createdAt:keepCreatedAt,status:'Previsto',recurring:'Sim'});
+      if(row.type==='Despesa'&&row.payment==='Cartão de crédito'&&row.cardId){
+        const card=cardById(row.cardId), n=row.installmentType==='Parcelada'?Math.max(2,row.installments||2):1;
+        const vals=splitCents(row.value,n), first=invoiceMonth(card,row.date);
+        vals.forEach((v,i)=>data.installments.push({id:'par_'+row.id+'_'+(i+1),purchaseId:row.id,cardId:row.cardId,number:i+1,total:n,value:v,month:monthAdd(first,i),date:row.date,status:'Previsto'}));
+      }
+      invalidateInvoiceOverridesForTx(row);
+    });
+    // Se a própria ocorrência selecionada ainda era prevista, ela também faz parte da série.
+    // Se já foi realizada, permanece intacta como histórico.
+    if(old.status!=='Realizado'&&!futureRows.some(row=>row.id===old.id)){
+      const edited=data.tx.find(t=>t.id===editingId);
+      if(edited){
+        invalidateInvoiceOverridesForTx(edited);
+        data.installments=data.installments.filter(p=>p.purchaseId!==edited.id);
+        const keepDate=edited.date, keepId=edited.id, keepCreatedAt=edited.createdAt;
+        Object.assign(edited,rec,{date:keepDate,id:keepId,createdAt:keepCreatedAt,status:'Previsto',recurring:'Sim'});
+        if(edited.type==='Despesa'&&edited.payment==='Cartão de crédito'&&edited.cardId){
+          const card=cardById(edited.cardId), n=edited.installmentType==='Parcelada'?Math.max(2,edited.installments||2):1;
+          const vals=splitCents(edited.value,n), first=invoiceMonth(card,edited.date);
+          vals.forEach((v,i)=>data.installments.push({id:'par_'+edited.id+'_'+(i+1),purchaseId:edited.id,cardId:edited.cardId,number:i+1,total:n,value:v,month:monthAdd(first,i),date:edited.date,status:'Previsto'}));
+        }
+        invalidateInvoiceOverridesForTx(edited);
+      }
+    }
   }else{
     invalidateInvoiceOverridesForTx(old);
     if(affectsAccount(old)) applyAccountDelta(old.accountId,-signed(old));
@@ -1129,16 +1178,8 @@ if(editingId){
     if(!edited){alert('Não foi possível localizar o lançamento para salvar as alterações.');return}
     Object.assign(edited,rec);
     if(recurrenceRecord&&recurrenceChoice==='1'){
-      // A edição pontual não altera a regra futura; preserva o indicador de recorrência no histórico.
-      edited.recurring=old.recurring||'Não';
-    }else if(recurrenceRecord&&recurrenceChoice==='2'){
-      Object.assign(recurrenceRecord,{
-        box:rec.box,type:rec.type,desc:rec.desc,party:rec.party||'',value:rec.value,
-        category:rec.category,payment:rec.payment,accountId:rec.accountId||'',cardId:rec.cardId||'',
-        frequency:rec.frequency,endDate:rec.endDate||'',active:true
-      });
-      // Mantém a âncora original da recorrência e atualiza esta ocorrência prevista.
-      edited.recurring='Sim';
+      // Edição pontual: mantém as demais ocorrências e a regra futura.
+      edited.recurring=old.recurring||'Não';edited.recurrenceId=old.recurrenceId||recurrenceRecord.id;
     }
     if(affectsAccount(edited)) applyAccountDelta(edited.accountId,signed(edited));
     if(edited.type==='Despesa'&&edited.payment==='Cartão de crédito'&&edited.cardId){
@@ -1148,9 +1189,10 @@ if(editingId){
     invalidateInvoiceOverridesForTx(edited);
   }
 }else{
-  if(rec.recurring==='Sim'){data.recurring.push({id:'rr_'+Date.now(),box:rec.box,type:rec.type,desc:rec.desc,party:rec.party||'',value:rec.value,category:rec.category,payment:rec.payment,accountId:rec.accountId||'',cardId:rec.cardId||'',frequency:rec.frequency,startDate:rec.date,endDate:rec.endDate||'',active:true});}
+  let newRecurrenceId='';
+  if(rec.recurring==='Sim'){newRecurrenceId='rr_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);data.recurring.push({id:newRecurrenceId,box:rec.box,type:rec.type,desc:rec.desc,party:rec.party||'',value:rec.value,category:rec.category,payment:rec.payment,accountId:rec.accountId||'',cardId:rec.cardId||'',frequency:rec.frequency,startDate:rec.date,endDate:rec.endDate||'',active:true});}
   const id=crypto.randomUUID?crypto.randomUUID():String(Date.now());
-  data.tx.push({id,...rec,createdAt:localDateTimeStamp()});
+  data.tx.push({id,...rec,...(newRecurrenceId?{recurrenceId:newRecurrenceId}:{}),createdAt:localDateTimeStamp()});
   if(affectsAccount(rec)) applyAccountDelta(rec.accountId,signed(rec));
   if(rec.type==='Despesa'&&rec.payment==='Cartão de crédito'&&rec.cardId){
     const card=cardById(rec.cardId), n=rec.installmentType==='Parcelada'?Math.max(2,rec.installments||2):1, vals=splitCents(rec.value,n), first=invoiceMonth(card,rec.date);
@@ -1399,7 +1441,7 @@ function unpaidInvoiceTotal(box,ym){
 function recurringRuleForOccurrence(t){
  if(!t)return null;
  if(t.virtualRecurring){const raw=String(t.id||'');const date=t.date;const rid=raw.startsWith('virtual_')?raw.slice(8,raw.length-date.length-1):'';return (data.recurring||[]).find(r=>r.id===rid&&r.active!==false)||null;}
- return (data.recurring||[]).find(r=>r.active!==false&&r.box===t.box&&r.type===t.type&&r.startDate===t.date&&sameText(r.desc,t.desc))||null;
+ return (t.recurrenceId&&(data.recurring||[]).find(r=>r.id===t.recurrenceId&&r.active!==false))||(data.recurring||[]).find(r=>r.active!==false&&r.box===t.box&&r.type===t.type&&r.startDate===t.date&&sameText(r.desc,t.desc))||null;
 }
 function editRecurringOccurrence(id,mode){
  let t;
@@ -1419,8 +1461,8 @@ function editRecurringOccurrence(id,mode){
  if(!confirm('Salvar estas alterações somente em '+mcfBRDate(t.date)+'? As outras ocorrências serão mantidas.'))return;
  if(!Array.isArray(r.skippedDates))r.skippedDates=[];
  if(!r.skippedDates.includes(t.date))r.skippedDates.push(t.date);
- const rec={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),box:r.box,type:r.type,desc:desc.trim()||r.desc,party:r.party||'',value,date:t.date,status:'Previsto',category:r.category||'',payment:r.payment||'',accountId:r.accountId||'',cardId:r.cardId||'',recurring:'Não',frequency:'',note:''};
- if(!t.virtualRecurring){const existing=data.tx.find(x=>x.id===t.id);if(existing){existing.recurring='Não';existing.desc=rec.desc;existing.value=value;existing.category=rec.category;existing.party=rec.party;existing.payment=rec.payment;existing.accountId=rec.accountId;existing.cardId=rec.cardId;}}
+ const rec={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),recurrenceId:r.id,box:r.box,type:r.type,desc:desc.trim()||r.desc,party:r.party||'',value,date:t.date,status:'Previsto',category:r.category||'',payment:r.payment||'',accountId:r.accountId||'',cardId:r.cardId||'',recurring:'Não',frequency:'',note:''};
+ if(!t.virtualRecurring){const existing=data.tx.find(x=>x.id===t.id);if(existing){existing.recurrenceId=r.id;existing.recurring='Não';existing.desc=rec.desc;existing.value=value;existing.category=rec.category;existing.party=rec.party;existing.payment=rec.payment;existing.accountId=rec.accountId;existing.cardId=rec.cardId;}}
  else data.tx.push(rec);
  persist();alert('Somente esta ocorrência foi alterada. As demais foram mantidas.');
 }
@@ -1433,7 +1475,7 @@ function projectedRecurringFromId(virtualId){
  const rid=parts.slice(1,-1).join('_');
  const r=(data.recurring||[]).find(x=>x.id===rid);
  if(!r||!date)return null;
- return {id:raw,box:r.box,type:r.type,desc:r.desc,party:r.party||'',value:Number(r.value||0),date,status:'Previsto',category:r.category||'',payment:r.payment||'',accountId:r.accountId||'',cardId:r.cardId||'',recurring:'Sim',frequency:r.frequency,endDate:r.endDate||'',virtualRecurring:true};
+ return {id:raw,box:r.box,type:r.type,desc:r.desc,party:r.party||'',value:Number(r.value||0),date,status:'Previsto',category:r.category||'',payment:r.payment||'',accountId:r.accountId||'',cardId:r.cardId||'',recurring:'Sim',recurrenceId:r.id,frequency:r.frequency,endDate:r.endDate||'',virtualRecurring:true};
 }
 
 function editRecurringRule(virtualId){
@@ -1471,8 +1513,11 @@ function stopRecurringRule(virtualId,mode){
 }
 function markRecurringOccurrenceHandled(t, scheduledDate){
  if(!t || !scheduledDate || !Array.isArray(data.recurring))return;
- const candidates=data.recurring.filter(r=>r.active!==false&&r.box===t.box&&r.type===t.type&&sameText(r.desc,t.desc));
- candidates.forEach(r=>{if(!Array.isArray(r.skippedDates))r.skippedDates=[];if(!r.skippedDates.includes(scheduledDate))r.skippedDates.push(scheduledDate);});
+ const rule=(t.recurrenceId&&(data.recurring||[]).find(r=>r.id===t.recurrenceId))
+   ||(data.recurring||[]).find(r=>r.active!==false&&r.box===t.box&&r.type===t.type&&r.startDate===scheduledDate&&sameText(r.desc,t.desc));
+ if(!rule)return;
+ if(!Array.isArray(rule.skippedDates))rule.skippedDates=[];
+ if(!rule.skippedDates.includes(scheduledDate))rule.skippedDates.push(scheduledDate);
 }
 function launchProjectedReceipt(virtualId){
  const t=projectedRecurringFromId(virtualId); if(!t||t.type!=='Receita')return;
@@ -1488,19 +1533,63 @@ function launchProjectedReceipt(virtualId){
  const rec={...t,id,date,value:amount,status:'Realizado',accountId:accs[idx].id,payment:method,virtualRecurring:false,recurring:'Não'};
  data.tx.push(rec); applyAccountDelta(rec.accountId,amount); persist();
 }
+function completeDueExpensePayment(t, isVirtual){
+ if(!t||t.type!=='Despesa')return;
+ const valueText=prompt('Valor efetivamente pago:',Number(t.value||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}));
+ if(valueText===null)return;
+ const amount=parseBR(valueText);if(!Number.isFinite(amount)||amount<=0){alert('Valor inválido.');return}
+ const dateText=prompt('Data do pagamento (DD/MM/AAAA):',todayBR());if(dateText===null)return;
+ const date=parseBRDate(dateText);if(!date){alert('Data inválida. Use DD/MM/AAAA.');return}
+ const methods=['Pix','Débito','Dinheiro','Transferência','Cartão de crédito','Outro'];
+ const methodChoice=prompt('Forma de pagamento:\n'+methods.map((m,i)=>`${i+1} — ${m}`).join('\n'),'1');
+ const method=methods[Number(methodChoice)-1];if(!method)return;
+ let card=null, installmentType='À vista', installmentCount=1;
+ if(method==='Cartão de crédito'){
+   const cards=activeCards(t.box);
+   if(!cards.length){alert('Cadastre um cartão de crédito ativo neste caixa antes de lançar o pagamento.');return}
+   const cardChoice=prompt('Selecione o cartão de crédito:\n'+cards.map((c,i)=>`${i+1} — ${c.name}`).join('\n'),'1');
+   if(cardChoice===null)return;
+   card=cards[Number(cardChoice)-1];if(!card){alert('Cartão inválido.');return}
+   const purchaseChoice=prompt('Compra no cartão:\n1 — À vista\n2 — Parcelada','1');
+   if(purchaseChoice===null)return;
+   if(purchaseChoice==='2'){
+     const nText=prompt('Em quantas parcelas?','2');if(nText===null)return;
+     installmentCount=Number(nText);
+     if(!Number.isInteger(installmentCount)||installmentCount<2||installmentCount>60){alert('Informe uma quantidade de parcelas entre 2 e 60.');return}
+     installmentType='Parcelada';
+   }
+ }
+ let selectedAccount=null;
+ if(method!=='Cartão de crédito'&&method!=='Dinheiro'){
+   const accs=activeAccounts(t.box);
+   if(!accs.length){alert('Cadastre uma conta bancária para registrar o pagamento.');return}
+   const choice=prompt('Digite o número da conta de onde saiu o dinheiro:\n'+accs.map((a,i)=>`${i+1} — ${a.name}`).join('\n'),'1');
+   if(choice===null)return;
+   const idx=Number(choice)-1;if(!Number.isInteger(idx)||!accs[idx]){alert('Conta inválida.');return}
+   selectedAccount=accs[idx];
+ }
+ const scheduledDate=t.date;
+ if(t.recurring==='Sim'||t.recurrenceId)markRecurringOccurrenceHandled(t,scheduledDate);
+ const id=isVirtual?(crypto.randomUUID?crypto.randomUUID():String(Date.now())):t.id;
+ const rec={...t,id,date,value:amount,status:'Realizado',payment:method,accountId:'',cardId:card?card.id:'',installmentType,installments:installmentCount,recurring:'Não',virtualRecurring:false};
+ if(!isVirtual){
+   const old=data.tx.find(x=>x.id===t.id);if(!old)return;
+   if(affectsAccount(old))applyAccountDelta(old.accountId,-signed(old));
+   Object.assign(old,rec);
+ }else data.tx.push(rec);
+ const saved=data.tx.find(x=>x.id===id);
+ data.installments=(data.installments||[]).filter(p=>p.purchaseId!==id);
+ if(card){
+   const vals=splitCents(amount,installmentCount),first=invoiceMonth(card,date);
+   vals.forEach((v,i)=>data.installments.push({id:'par_'+id+'_'+(i+1),purchaseId:id,cardId:card.id,number:i+1,total:installmentCount,value:v,month:monthAdd(first,i),date,status:'Previsto'}));
+ }else if(selectedAccount){
+   saved.accountId=selectedAccount.id;applyAccountDelta(saved.accountId,-amount);
+ }else saved.accountId='';
+ persist();
+}
 function launchProjectedPayment(virtualId){
- const t=projectedRecurringFromId(virtualId); if(!t||t.type!=='Despesa')return;
- const v=prompt('Valor efetivamente pago:',Number(t.value||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}));
- if(v===null)return; const amount=parseBR(v); if(!Number.isFinite(amount)||amount<=0){alert('Valor inválido.');return}
- const dateText=prompt('Data do pagamento (DD/MM/AAAA):',todayBR()); if(dateText===null)return;
- const date=parseBRDate(dateText); if(!date){alert('Data inválida. Use DD/MM/AAAA.');return}
- const accs=activeAccounts(t.box); if(!accs.length){alert('Cadastre uma conta bancária para registrar o pagamento.');return}
- const choice=prompt('Digite o número da conta de onde saiu o dinheiro:\n'+accs.map((a,i)=>`${i+1} — ${a.name}`).join('\n'),'1'); const idx=Number(choice)-1; if(!Number.isInteger(idx)||!accs[idx])return;
- const methods=['Pix','Débito','Dinheiro','Transferência','Outro']; const methodChoice=prompt('Forma de pagamento:\n'+methods.map((m,i)=>`${i+1} — ${m}`).join('\n'),'1'); const method=methods[Number(methodChoice)-1]; if(!method)return;
- markRecurringOccurrenceHandled(t,t.date);
- const id=crypto.randomUUID?crypto.randomUUID():String(Date.now());
- const rec={...t,id,date,value:amount,status:'Realizado',accountId:accs[idx].id,payment:method,virtualRecurring:false,recurring:'Não'};
- data.tx.push(rec); applyAccountDelta(rec.accountId,-amount); persist();
+ const t=projectedRecurringFromId(virtualId);if(!t||t.type!=='Despesa')return;
+ completeDueExpensePayment(t,true);
 }
 function launchReceipt(id){
  const t=data.tx.find(x=>x.id===id); if(!t||t.status!=='Previsto'||t.type!=='Receita')return;
@@ -1524,26 +1613,8 @@ function launchReceipt(id){
 }
 
 function launchPayment(id){
- const t=data.tx.find(x=>x.id===id); if(!t||t.status!=='Previsto'||t.type!=='Despesa')return;
- const v=prompt('Valor efetivamente pago:',Number(t.value||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}));
- if(v===null)return;
- const amount=parseBR(v); if(!Number.isFinite(amount)||amount<=0){alert('Valor inválido.');return}
- const dateText=prompt('Data do pagamento (DD/MM/AAAA):',todayBR());
- if(dateText===null)return;
- const date=parseBRDate(dateText); if(!date){alert('Data inválida. Use DD/MM/AAAA.');return}
- const accs=activeAccounts(t.box); if(!accs.length){alert('Cadastre uma conta bancária para registrar o pagamento.');return}
- const choice=prompt('Digite o número da conta de onde saiu o dinheiro:\n'+accs.map((a,i)=>`${i+1} — ${a.name}`).join('\n'),'1');
- const idx=Number(choice)-1; if(!Number.isInteger(idx)||!accs[idx])return;
- const methods=['Pix','Débito','Dinheiro','Transferência','Outro'];
- const methodChoice=prompt('Forma de pagamento:\n'+methods.map((m,i)=>`${i+1} — ${m}`).join('\n'),'1');
- const method=methods[Number(methodChoice)-1]; if(!method)return;
- const oldValue=Number(t.value||0);
- const scheduledDate=t.date;
- if(t.recurring==='Sim')markRecurringOccurrenceHandled(t,scheduledDate);
- t.value=amount; t.date=date; t.status='Realizado'; t.accountId=accs[idx].id; t.payment=method;
- if(t.cardId)t.cardId='';
- if(affectsAccount(t))applyAccountDelta(t.accountId,-amount);
- persist();
+ const t=data.tx.find(x=>x.id===id);if(!t||t.status!=='Previsto'||t.type!=='Despesa')return;
+ completeDueExpensePayment(t,false);
 }
 
 function backupPayload(){return {app:'Meu Controle Financeiro',version:SCHEMA,exportedAt:new Date().toISOString(),data:cloneData(normalizeData(data))}}
